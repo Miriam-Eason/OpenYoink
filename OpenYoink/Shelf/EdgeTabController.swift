@@ -32,7 +32,6 @@ final class EdgeTabController: NSObject {
     private let dragStartMonitor: DragStartMonitor
     private let onToggleShelf: @MainActor () -> Void
     private let onShowShelf: @MainActor () -> Void
-    private let onHoverChanged: @MainActor (Bool) -> Void
     private let onPreviewSuppressed: @MainActor () -> Void
 
     /// 拉环正被按住拖动（重定位会话进行中）。镜像到
@@ -68,9 +67,6 @@ final class EdgeTabController: NSObject {
             self?.onPreviewSuppressed()
             self?.onToggleShelf()
         }
-        view.onHoverChanged = { [weak self] hovering in
-            self?.onHoverChanged(hovering)
-        }
         view.onReposition = { [weak self] offset, position in
             self?.finishReposition(offset: offset, position: position)
         }
@@ -102,7 +98,6 @@ final class EdgeTabController: NSObject {
          dragStartMonitor: DragStartMonitor,
          onToggleShelf: @escaping @MainActor () -> Void,
          onShowShelf: @escaping @MainActor () -> Void,
-         onHoverChanged: @escaping @MainActor (Bool) -> Void = { _ in },
          onPreviewSuppressed: @escaping @MainActor () -> Void = {}) {
         self.appState = appState
         self.settings = settings
@@ -111,7 +106,6 @@ final class EdgeTabController: NSObject {
         self.dragStartMonitor = dragStartMonitor
         self.onToggleShelf = onToggleShelf
         self.onShowShelf = onShowShelf
-        self.onHoverChanged = onHoverChanged
         self.onPreviewSuppressed = onPreviewSuppressed
         super.init()
         beginObservation()
@@ -158,7 +152,6 @@ final class EdgeTabController: NSObject {
             tabView.position = settings.shelfPosition
         }
         guard shouldBeVisible else {
-            onHoverChanged(false)
             // 隐藏时强制清强调态：下次 showTab 总是从常态 frame 起步，
             // 再由 updateEmphasis 按需放大（避免带着陈旧的放大 frame 出现）。
             if isEmphasized {
@@ -395,8 +388,6 @@ final class EdgeTabView: NSView {
 
     /// 单击（位移 < clickThreshold 的抬起）。
     var onClick: (@MainActor () -> Void)?
-    /// Pointer entry/exit, independent from click and reposition gestures.
-    var onHoverChanged: (@MainActor (Bool) -> Void)?
     /// 拖动结束上报：最新 offset 与贴附侧（可能已换边）。
     var onReposition: (@MainActor (CGFloat, SettingsStore.ShelfPosition) -> Void)?
     /// 重定位会话开始/结束（controller 据此抑制拖拽唤出与强调态）。
@@ -409,7 +400,6 @@ final class EdgeTabView: NSView {
     private let vibrancyView = NSVisualEffectView()
     private let iconView = NSImageView()
     private let strokeLayer = CAShapeLayer()
-    private var hoverTrackingArea: NSTrackingArea?
 
     // 手势状态（一次按下会话）。
     private var isRepositioning = false
@@ -476,27 +466,6 @@ final class EdgeTabView: NSView {
                                 width: iconSize, height: iconSize)
         strokeLayer.frame = bounds
         updateStrokePath()
-    }
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let hoverTrackingArea { removeTrackingArea(hoverTrackingArea) }
-        let trackingArea = NSTrackingArea(
-            rect: bounds,
-            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(trackingArea)
-        hoverTrackingArea = trackingArea
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        onHoverChanged?(true)
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        onHoverChanged?(false)
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }

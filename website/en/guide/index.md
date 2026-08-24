@@ -15,6 +15,6 @@ OpenYoink is a temporary landing spot for files, folders, images, text, and link
 
 If you are comparing macOS drag-and-drop utilities, read [Why OpenYoink](./open-source-drag-shelf) for common workflows, local-first behavior, and how a drag shelf differs from the clipboard.
 
-::: tip Available in v1.6.1
-The current stable build turns Island into a modular five-position platform with an in-Island library, adds side-tab hover preview, and introduces read-only CPU, memory, network, disk, battery, thermal, and foreground-app status.
+::: tip Available in v1.6.2
+The current stable build fixes the side tab so passive hover stays collapsed, dragging files to the matching screen edge reveals the shelf, and the tab remains draggable along the edge. The modular five-position Island, module library, and read-only system status remain available.
 :::

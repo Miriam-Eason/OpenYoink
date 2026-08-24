@@ -233,9 +233,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onShowShelf: { [weak self] in
             self?.shelfPresentationCoordinator.showClassic(animated: true)
         },
-        onHoverChanged: { [weak self] hovering in
-            self?.shelfWindowController.classicEdgeTabHoverChanged(hovering)
-        },
         onPreviewSuppressed: { [weak self] in
             self?.shelfWindowController.suppressClassicHoverPreview()
         }

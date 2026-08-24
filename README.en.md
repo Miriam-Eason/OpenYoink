@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.1**, adding a modular five-position Island, an in-Island module library, side-tab hover preview, and a read-only Mac system status module. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.2**, fixing the side tab so passive hover stays collapsed, dragging files to the edge reveals the shelf, and the tab remains draggable along the edge. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 

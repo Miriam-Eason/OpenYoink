@@ -211,12 +211,6 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已固定到岛顶部" } }
       }
     },
-    "Preview shelf when hovering over the edge tab" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Preview shelf when hovering over the edge tab" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "悬停边缘拉环时预览暂存架" } }
-      }
-    },
     "Read-only Mac status" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Read-only Mac status" } },

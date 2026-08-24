@@ -348,10 +348,6 @@ private struct GeneralSettingsTab: View {
                     // shelf 展开后由面板外缘隐形热区承担同点位收起）。
                     // custom 模式无贴附缘，开关不生效（说明文案覆盖）。
                     Toggle("Show edge tab while shelf is hidden", isOn: $settings.edgeTabEnabled)
-                    Toggle("Preview shelf when hovering over the edge tab",
-                           isOn: $settings.classicShelfHoverRevealEnabled)
-                        .disabled(!settings.edgeTabEnabled
-                                  || settings.shelfPosition == .custom)
                     Text("Click the tab to show the shelf, drag it along the edge to reposition, or drop files onto it. Not shown in custom position mode.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
