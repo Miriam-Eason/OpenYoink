@@ -10,11 +10,30 @@ final class PowerSourceMonitorTests: XCTestCase {
             kIOPSMaxCapacityKey: 90,
             kIOPSPowerSourceStateKey: kIOPSACPowerValue,
             kIOPSIsChargingKey: true,
+            kIOPSVoltageKey: 12_000,
+            kIOPSCurrentKey: 2_000,
         ])
         XCTAssertEqual(snapshot.percentage, 50)
         XCTAssertTrue(snapshot.hasBattery)
         XCTAssertTrue(snapshot.isCharging)
         XCTAssertTrue(snapshot.isConnectedToPower)
+        XCTAssertEqual(snapshot.powerWatts, 24)
+    }
+
+    func testBatteryPowerUsesRegistryFallbackAndDischargeDirection() {
+        let snapshot = PowerSourceMonitor.snapshot(from: [
+            kIOPSCurrentCapacityKey: 75,
+            kIOPSMaxCapacityKey: 100,
+            kIOPSPowerSourceStateKey: kIOPSBatteryPowerValue,
+            kIOPSIsChargingKey: false,
+            kIOPSVoltageKey: 0,
+            kIOPSCurrentKey: 0,
+        ], registryProperties: [
+            "Voltage": 12_500,
+            "InstantAmperage": 800,
+        ])
+
+        XCTAssertEqual(snapshot.powerWatts, -10)
     }
 
     func testMissingMaximumIsUnavailable() {

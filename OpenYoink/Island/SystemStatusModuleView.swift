@@ -221,10 +221,15 @@ struct IslandSystemStatusView: View {
 
     private var batteryDetail: String? {
         guard let battery = store.snapshot.battery else { return nil }
-        if battery.isCharging { return String(localized: "Charging") }
-        return battery.isConnectedToPower
-            ? String(localized: "Connected to Power")
-            : String(localized: "On Battery")
+        let status = if battery.isCharging {
+            String(localized: "Charging")
+        } else if battery.isConnectedToPower {
+            String(localized: "Connected to Power")
+        } else {
+            String(localized: "On Battery")
+        }
+        guard let powerWatts = battery.powerWatts else { return status }
+        return "\(status) · \(BatteryPowerFormatting.string(watts: powerWatts))"
     }
 
     private var pressureTitle: String? {

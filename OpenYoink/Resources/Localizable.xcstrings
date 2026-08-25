@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "2 min" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "2 min" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "2 分钟" } }
+      }
+    },
     "%@ is using significant resources" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ is using significant resources" } },
@@ -11,6 +17,12 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "available" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可用" } }
+      }
+    },
+    "Average" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Average" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "平均" } }
       }
     },
     "Choose up to five pinned modules" : {
@@ -2390,6 +2402,12 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "电池" } }
       }
     },
+    "Battery power" : {
+      "extractionState" : "manual", "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery power" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "电池功率" } }
+      }
+    },
     "Battery critically low" : {
       "extractionState" : "manual", "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery critically low" } },
@@ -2604,6 +2622,12 @@
       "extractionState" : "manual", "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Power connected" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已接通电源" } }
+      }
+    },
+    "Power history" : {
+      "extractionState" : "manual", "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Power history" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "功率波形" } }
       }
     },
     "Previous track" : {

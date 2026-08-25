@@ -1,20 +1,114 @@
 import Foundation
+import IOKit
 import IOKit.ps
 import Observation
+
+struct BatteryElectricalSample: Equatable, Sendable {
+    let voltageMillivolts: Int64
+    let currentMilliamps: Int64
+
+    func signedPowerWatts(isCharging: Bool, isConnectedToPower: Bool) -> Double {
+        let rawWatts = Double(voltageMillivolts) * Double(currentMilliamps) / 1_000_000
+        if isCharging { return abs(rawWatts) }
+        if !isConnectedToPower { return -abs(rawWatts) }
+        return rawWatts
+    }
+}
+
+struct BatteryPowerSample: Equatable, Sendable {
+    let timestamp: Date
+    let watts: Double
+}
+
+enum BatteryElectricalReader {
+    private static let registryCurrentKeys = ["InstantAmperage", "Amperage"]
+
+    static func sample(
+        powerSourceDescription: [String: Any],
+        registryProperties: [String: Any]? = nil
+    ) -> BatteryElectricalSample? {
+        let sourceVoltage = integer(powerSourceDescription[kIOPSVoltageKey])
+        let sourceCurrent = integer(powerSourceDescription[kIOPSCurrentKey])
+        let registryVoltage = integer(registryProperties?["Voltage"])
+        // Apple silicon can report a zero IOPS current while the battery
+        // registry still publishes a live instantaneous value.
+        let registryCurrents = registryCurrentKeys.compactMap {
+            integer(registryProperties?[$0])
+        }
+        let registryCurrent = registryCurrents.first(where: { $0 != 0 })
+            ?? registryCurrents.first
+
+        guard let voltage = validVoltage(sourceVoltage) ?? validVoltage(registryVoltage) else {
+            return nil
+        }
+        let current: Int64?
+        if let sourceCurrent, sourceCurrent != 0 {
+            current = sourceCurrent
+        } else {
+            current = registryCurrent ?? sourceCurrent
+        }
+        guard let current, validCurrent(current) else { return nil }
+        return .init(voltageMillivolts: voltage, currentMilliamps: current)
+    }
+
+    static func readRegistryProperties() -> [String: Any]? {
+        let service = IOServiceGetMatchingService(
+            kIOMainPortDefault,
+            IOServiceMatching("AppleSmartBattery")
+        )
+        guard service != IO_OBJECT_NULL else { return nil }
+        defer { IOObjectRelease(service) }
+
+        var properties: Unmanaged<CFMutableDictionary>?
+        guard IORegistryEntryCreateCFProperties(
+            service,
+            &properties,
+            kCFAllocatorDefault,
+            0
+        ) == KERN_SUCCESS else { return nil }
+        return properties?.takeRetainedValue() as? [String: Any]
+    }
+
+    private static func integer(_ value: Any?) -> Int64? {
+        (value as? NSNumber)?.int64Value
+    }
+
+    private static func validVoltage(_ value: Int64?) -> Int64? {
+        guard let value, value > 0, value <= 100_000 else { return nil }
+        return value
+    }
+
+    private static func validCurrent(_ value: Int64) -> Bool {
+        value != Int64.min && abs(value) <= 100_000
+    }
+}
+
+enum BatteryPowerFormatting {
+    static func string(watts: Double) -> String {
+        let normalized = abs(watts) < 0.05 ? 0 : watts
+        let format = normalized == 0 ? "%.1f W" : "%+.1f W"
+        return String(format: format, locale: .current, normalized)
+    }
+}
 
 @MainActor
 @Observable
 final class PowerSourceMonitor: IslandModule {
+    static let powerHistoryDuration: TimeInterval = 2 * 60
+    static let maximumPowerHistoryCount = 60
+
     struct Snapshot: Equatable, Sendable {
         var hasBattery: Bool
         var percentage: Int
         var isCharging: Bool
         var isConnectedToPower: Bool
+        var powerWatts: Double? = nil
 
         static let unavailable = Snapshot(hasBattery: false,
                                           percentage: 0,
                                           isCharging: false,
-                                          isConnectedToPower: false)
+                                          isConnectedToPower: false,
+                                          powerWatts: nil)
     }
 
     let descriptor = IslandModuleDescriptor(
@@ -27,10 +121,12 @@ final class PowerSourceMonitor: IslandModule {
 
     @ObservationIgnored
     nonisolated(unsafe) private var runLoopSource: CFRunLoopSource?
+    @ObservationIgnored private var pollingTask: Task<Void, Never>?
     private var lastAlertBand: Int?
     private let nowProvider: @MainActor () -> Date
     private let fullChargeAlertEnabled: @MainActor () -> Bool
     private(set) var snapshot: Snapshot = .unavailable
+    private(set) var powerHistory: [BatteryPowerSample] = []
     private(set) var isRunning = false
     var onActivity: (@MainActor (IslandActivity?) -> Void)?
     var onStateChange: (@MainActor () -> Void)?
@@ -42,6 +138,7 @@ final class PowerSourceMonitor: IslandModule {
     }
 
     deinit {
+        pollingTask?.cancel()
         if let runLoopSource {
             CFRunLoopSourceInvalidate(runLoopSource)
         }
@@ -68,11 +165,20 @@ final class PowerSourceMonitor: IslandModule {
         let source = unmanaged.takeRetainedValue()
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        pollingTask = Task { @MainActor [weak self] in
+            while let self, self.isRunning, !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled else { break }
+                self.refresh()
+            }
+        }
     }
 
     func stop() {
         guard isRunning else { return }
         isRunning = false
+        pollingTask?.cancel()
+        pollingTask = nil
         if let runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
             CFRunLoopSourceInvalidate(runLoopSource)
@@ -90,11 +196,38 @@ final class PowerSourceMonitor: IslandModule {
     func process(_ current: Snapshot) {
         let previous = snapshot
         snapshot = current
+        recordPowerSample(from: current)
         evaluateActivity(previous: previous, current: current)
         onStateChange?()
     }
 
-    static func snapshot(from description: [String: Any]?) -> Snapshot {
+    private func recordPowerSample(from snapshot: Snapshot) {
+        guard let watts = snapshot.powerWatts, watts.isFinite else { return }
+        let timestamp = nowProvider()
+        let sample = BatteryPowerSample(timestamp: timestamp, watts: watts)
+
+        // Power-source notifications can arrive next to the regular poll. Fold
+        // near-simultaneous readings together so the chart keeps a steady pace.
+        if let last = powerHistory.last,
+           timestamp.timeIntervalSince(last.timestamp) < 0.5 {
+            powerHistory[powerHistory.count - 1] = sample
+        } else {
+            powerHistory.append(sample)
+        }
+
+        let cutoff = timestamp.addingTimeInterval(-Self.powerHistoryDuration)
+        powerHistory.removeAll { $0.timestamp < cutoff }
+        if powerHistory.count > Self.maximumPowerHistoryCount {
+            powerHistory.removeFirst(
+                powerHistory.count - Self.maximumPowerHistoryCount
+            )
+        }
+    }
+
+    static func snapshot(
+        from description: [String: Any]?,
+        registryProperties: [String: Any]? = nil
+    ) -> Snapshot {
         guard let description else { return .unavailable }
         let current = description[kIOPSCurrentCapacityKey] as? Int ?? 0
         let maximum = description[kIOPSMaxCapacityKey] as? Int ?? 0
@@ -103,10 +236,15 @@ final class PowerSourceMonitor: IslandModule {
         let state = description[kIOPSPowerSourceStateKey] as? String
         let onAC = state == kIOPSACPowerValue
         let charging = description[kIOPSIsChargingKey] as? Bool ?? false
+        let powerWatts = BatteryElectricalReader.sample(
+            powerSourceDescription: description,
+            registryProperties: registryProperties
+        )?.signedPowerWatts(isCharging: charging, isConnectedToPower: onAC)
         return Snapshot(hasBattery: true,
                         percentage: percentage,
                         isCharging: charging,
-                        isConnectedToPower: onAC)
+                        isConnectedToPower: onAC,
+                        powerWatts: powerWatts)
     }
 
     private static func readSnapshot() -> Snapshot {
@@ -114,12 +252,13 @@ final class PowerSourceMonitor: IslandModule {
               let list = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef]
         else { return .unavailable }
 
+        let registryProperties = BatteryElectricalReader.readRegistryProperties()
         for source in list {
             guard let description = IOPSGetPowerSourceDescription(info, source)?
                 .takeUnretainedValue() as? [String: Any],
                   let type = description[kIOPSTypeKey] as? String,
                   type == kIOPSInternalBatteryType else { continue }
-            return snapshot(from: description)
+            return snapshot(from: description, registryProperties: registryProperties)
         }
         return .unavailable
     }

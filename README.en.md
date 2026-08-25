@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.2**, fixing the side tab so passive hover stays collapsed, dragging files to the edge reveals the shelf, and the tab remains draggable along the edge. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.3**, adding live charge/discharge power and a two-minute waveform to the Battery module. System Status also shows the current battery power. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 
@@ -44,7 +44,7 @@ OpenYoink lives in the menu bar without a Dock icon. It appears when you need it
 - **Accepts everyday content:** files, folders, plain and rich text, images, links, plus mail messages, calendar events, contacts, and more.
 - **Appears your way:** automatically when dragging, from an edge tab, with a global shortcut, or after a mouse-shake gesture.
 - **Two independent entrances:** the classic side shelf and OpenYoink Island can run on their own or together and share the same parking space.
-- **Native Island:** enabled by default for new installs and blended into the Mac camera housing; external and notchless displays fall back to a top pill with shelf, transfer, timer, battery, and Now Playing modules. It can be disabled independently.
+- **Native Island:** enabled by default for new installs and blended into the Mac camera housing; external and notchless displays fall back to a top pill with shelf, transfer, timer, battery, and Now Playing modules. Battery includes live power and a two-minute waveform, and every module can be disabled independently.
 - **Organizes without interruption:** Quick Look, multi-select, marquee selection, stacks, manual ordering, and recent items.
 - **Works across your desktop:** multiple displays, Spaces, and full-screen apps, with a per-app ignore list.
 - **Predictable file semantics:** source files are referenced by default and Finder drops only request a copy. Hold `⌘` while importing to use the managed-move flow described in [File safety and lifecycle](#file-safety-and-lifecycle).

@@ -32,6 +32,7 @@ struct SystemBatteryMetric: Codable, Sendable, Equatable {
     let percentage: Int
     let isCharging: Bool
     let isConnectedToPower: Bool
+    let powerWatts: Double?
 }
 
 struct SystemSnapshot: Codable, Sendable, Equatable {
@@ -380,6 +381,7 @@ actor SystemStatusSampler: SystemStatusProviding {
         guard let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
               let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef]
         else { return nil }
+        let registryProperties = BatteryElectricalReader.readRegistryProperties()
         for source in sources {
             guard let description = IOPSGetPowerSourceDescription(info, source)?
                 .takeUnretainedValue() as? [String: Any],
@@ -388,13 +390,23 @@ actor SystemStatusSampler: SystemStatusProviding {
                   let maximum = description[kIOPSMaxCapacityKey] as? Int,
                   maximum > 0 else { continue }
             let current = description[kIOPSCurrentCapacityKey] as? Int ?? 0
+            let isCharging = description[kIOPSIsChargingKey] as? Bool ?? false
+            let isConnectedToPower = description[kIOPSPowerSourceStateKey] as? String
+                == kIOPSACPowerValue
+            let powerWatts = BatteryElectricalReader.sample(
+                powerSourceDescription: description,
+                registryProperties: registryProperties
+            )?.signedPowerWatts(
+                isCharging: isCharging,
+                isConnectedToPower: isConnectedToPower
+            )
             return .init(
                 percentage: min(100, max(0, Int(
                     (Double(current) / Double(maximum) * 100).rounded()
                 ))),
-                isCharging: description[kIOPSIsChargingKey] as? Bool ?? false,
-                isConnectedToPower: description[kIOPSPowerSourceStateKey] as? String
-                    == kIOPSACPowerValue
+                isCharging: isCharging,
+                isConnectedToPower: isConnectedToPower,
+                powerWatts: powerWatts
             )
         }
         return nil
