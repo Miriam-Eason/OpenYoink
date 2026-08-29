@@ -1,5 +1,15 @@
 import AppKit
 
+/// Optional destination override for module-specific drops. When active it
+/// owns the complete drop decision, so a rejected file cannot silently fall
+/// through into the shared ShelfStore behind another module's UI.
+@MainActor
+struct DragContainerDropOverride {
+    let isActive: @MainActor () -> Bool
+    let canHandle: @MainActor (NSPasteboard) -> Bool
+    let perform: @MainActor (NSPasteboard) -> Bool
+}
+
 /// 拖入悬停/插入位置状态，由 `DragContainerView`（NSDraggingDestination）驱动，
 /// 经 `@Environment` 注入 `ShelfView` 渲染落点高亮与插入指示线（S3 预留样式）。
 @MainActor
@@ -42,6 +52,7 @@ final class DragContainerView: NSView {
     private let dropTargetState: DropTargetState
     /// S10: 卡片网格几何（SwiftUI 上报），拖入插入定位用。
     private let gridGeometry: ShelfGridGeometry
+    private let dropOverride: DragContainerDropOverride?
     /// 持有的 hosting controller（addSubview 只 retain 视图，controller 需显式持有）。
     private let contentViewController: NSViewController
 
@@ -49,11 +60,13 @@ final class DragContainerView: NSView {
          coordinator: DropImportCoordinator,
          dropTargetState: DropTargetState,
          gridGeometry: ShelfGridGeometry,
+         dropOverride: DragContainerDropOverride? = nil,
          contentViewController: NSViewController) {
         self.store = store
         self.coordinator = coordinator
         self.dropTargetState = dropTargetState
         self.gridGeometry = gridGeometry
+        self.dropOverride = dropOverride
         self.contentViewController = contentViewController
         super.init(frame: .zero)
 
@@ -86,6 +99,17 @@ final class DragContainerView: NSView {
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if let dropOverride, dropOverride.isActive() {
+            guard sender.draggingSource == nil,
+                  dropOverride.canHandle(sender.draggingPasteboard) else {
+                dropTargetState.reset()
+                return []
+            }
+            dropTargetState.isTargeted = true
+            dropTargetState.insertionIndex = nil
+            dropTargetState.mode = .copy
+            return .copy
+        }
         // S5: 来自本应用卡片的拖出（draggingSource 非空）不接受回落到自身，
         // 避免「拖出又放回 shelf」产生重复引用。跨应用拖入 draggingSource 为 nil。
         guard sender.draggingSource == nil
@@ -100,6 +124,15 @@ final class DragContainerView: NSView {
     }
 
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if let dropOverride, dropOverride.isActive() {
+            guard sender.draggingSource == nil,
+                  dropOverride.canHandle(sender.draggingPasteboard) else {
+                dropTargetState.reset()
+                return []
+            }
+            dropTargetState.isTargeted = true
+            return .copy
+        }
         guard sender.draggingSource == nil
                 || coordinator.acceptsInternalTutorialDrag(sender.draggingPasteboard) else {
             return []
@@ -125,6 +158,10 @@ final class DragContainerView: NSView {
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if let dropOverride, dropOverride.isActive() {
+            guard dropOverride.canHandle(sender.draggingPasteboard) else { return false }
+            return dropOverride.perform(sender.draggingPasteboard)
+        }
         // F-05: 落下瞬间以实时修饰键判定模式（⌘ = 剪切移入）。
         // 教程文件永远走引用导入；即使用户此刻按住 ⌘，也不能把应用自己
         // 创建的练习文件移入废纸篓/托管目录。

@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.3**, adding live charge/discharge power and a two-minute waveform to the Battery module. System Status also shows the current battery power. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.4**, adding a Quick Access module for favorite folders. Folders open with the current macOS default file manager, including Finder, QSpace, or another replacement. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 
@@ -44,7 +44,7 @@ OpenYoink lives in the menu bar without a Dock icon. It appears when you need it
 - **Accepts everyday content:** files, folders, plain and rich text, images, links, plus mail messages, calendar events, contacts, and more.
 - **Appears your way:** automatically when dragging, from an edge tab, with a global shortcut, or after a mouse-shake gesture.
 - **Two independent entrances:** the classic side shelf and OpenYoink Island can run on their own or together and share the same parking space.
-- **Native Island:** enabled by default for new installs and blended into the Mac camera housing; external and notchless displays fall back to a top pill with shelf, transfer, timer, battery, and Now Playing modules. Battery includes live power and a two-minute waveform, and every module can be disabled independently.
+- **Native Island:** enabled by default for new installs and blended into the Mac camera housing; external and notchless displays fall back to a top pill with Shelf, Transfers, Timer, Battery, System Status, Now Playing, and Quick Access modules. Quick Access keeps favorite folders close, Battery includes live power and a two-minute waveform, and every module can be disabled independently.
 - **Organizes without interruption:** Quick Look, multi-select, marquee selection, stacks, manual ordering, and recent items.
 - **Works across your desktop:** multiple displays, Spaces, and full-screen apps, with a per-app ignore list.
 - **Predictable file semantics:** source files are referenced by default and Finder drops only request a copy. Hold `⌘` while importing to use the managed-move flow described in [File safety and lifecycle](#file-safety-and-lifecycle).
@@ -121,6 +121,7 @@ When dropping a regular file, OpenYoink exposes the file URL with a Chromium-com
 - Automatic update checks are on by default and can be turned off. They talk only to GitHub Pages / Releases; there is no other background network activity.
 - The current clipboard is read only when you explicitly press the double-tap shortcut to park it.
 - **Now Playing** is an opt-in Island module. When enabled, it shows the real cover, progress, and media controls using a bundled helper when available, otherwise Apple Music / Spotify AppleScript with a possible Automation prompt. It does not use the network and a failure never affects the shelf or other Island modules.
+- **Quick Access** is an opt-in Island module. It stores security-scoped bookmarks only for folders you add. The default open action asks macOS for the current default file manager rather than hard-coding Finder or QSpace, and removing a favorite never deletes the real folder.
 - Persistence uses security-scoped bookmarks and atomic JSON writes to avoid extra copies of originals and to recover cleanly from partial writes.
 
 ## Build from source

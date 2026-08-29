@@ -13,6 +13,186 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%@ 正在占用较多系统资源" } }
       }
     },
+    "(Default)" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "(Default)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "（默认）" } }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加" } }
+      }
+    },
+    "Add Folders to Quick Access" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Folders to Quick Access" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "将文件夹添加到快速访问" } }
+      }
+    },
+    "Add folders" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add folders" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加文件夹" } }
+      }
+    },
+    "Add folders you open often." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add folders you open often." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加常用文件夹。" } }
+      }
+    },
+    "Choose an Application" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose an Application" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择应用" } }
+      }
+    },
+    "Could not open this folder." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not open this folder." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法打开此文件夹。" } }
+      }
+    },
+    "Double-click to open" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-click to open" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击打开" } }
+      }
+    },
+    "Favorite folders" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Favorite folders" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "收藏文件夹" } }
+      }
+    },
+    "Folder added to Quick Access." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Folder added to Quick Access." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "文件夹已添加到快速访问。" } }
+      }
+    },
+    "Folder favorites could not be loaded. The damaged data was kept for recovery." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Folder favorites could not be loaded. The damaged data was kept for recovery." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法加载收藏文件夹，损坏的数据已保留以便恢复。" } }
+      }
+    },
+    "Folders added to Quick Access." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Folders added to Quick Access." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "文件夹已添加到快速访问。" } }
+      }
+    },
+    "Locate Again…" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Locate Again…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新定位…" } }
+      }
+    },
+    "Locate Favorite Folder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Locate Favorite Folder" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "定位收藏文件夹" } }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "名称" } }
+      }
+    },
+    "No compatible applications" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No compatible applications" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "没有兼容的应用" } }
+      }
+    },
+    "No favorite folders" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No favorite folders" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无收藏文件夹" } }
+      }
+    },
+    "Only folders can be added to Quick Access." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only folders can be added to Quick Access." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "只能将文件夹添加到快速访问。" } }
+      }
+    },
+    "Open With" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open With" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开方式" } }
+      }
+    },
+    "Quick Access" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quick Access" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "快速访问" } }
+      }
+    },
+    "Quick Access · %lld" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quick Access · %lld" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "快速访问 · %lld" } }
+      }
+    },
+    "Remove Favorite" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove Favorite" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "移除收藏" } }
+      }
+    },
+    "Rename Favorite" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename Favorite" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重命名收藏" } }
+      }
+    },
+    "Rename…" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重命名…" } }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "保存" } }
+      }
+    },
+    "Some folders could not be added." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Some folders could not be added." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "部分文件夹无法添加。" } }
+      }
+    },
+    "This folder is already in Quick Access." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This folder is already in Quick Access." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此文件夹已在快速访问中。" } }
+      }
+    },
+    "This folder is not available." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This folder is not available." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此文件夹不可用。" } }
+      }
+    },
+    "This folder is not available. Locate it again to reconnect the favorite." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This folder is not available. Locate it again to reconnect the favorite." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此文件夹不可用，请重新定位以恢复收藏。" } }
+      }
+    },
+    "Unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unavailable" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不可用" } }
+      }
+    },
     "available" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "available" } },

@@ -10,4 +10,6 @@ Island is enabled by default for new installs. Existing users keep their saved s
 
 The classic edge shelf and Island are independent entrances to the same shelf. You may enable either one or both, and the Shelf module inside Island can be disabled without closing the classic shelf.
 
+The optional Quick Access module keeps favorite folders in a compact grid. Double-clicking a folder uses the current macOS default file manager, so Finder, QSpace, and other replacements work without an app-specific setting. Removing a favorite never removes the actual folder.
+
 Click the compact Island to expand it. Dragging near the top-center switches to the Shelf module. Press `Esc`, click outside, or click the center of the expanded Island to collapse it.

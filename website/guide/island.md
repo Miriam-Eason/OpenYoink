@@ -5,7 +5,7 @@ description: 使用与 Mac 刘海融合的 OpenYoink Island，并理解无刘海
 
 # OpenYoink Island <Badge type="tip" text="v1.4.1" />
 
-OpenYoink Island 把 Mac 顶部中央区域变成一个轻量入口。它可以承接拖放，也可以显示传输、计时器、电池和正在播放。
+OpenYoink Island 把 Mac 顶部中央区域变成一个轻量入口。它可以承接拖放，也可以显示传输、计时器、电池、系统状态、正在播放和快速访问。
 
 ![正在播放时的紧凑 Island，与物理刘海融为一体](/screenshots/island-compact-media.png)
 
@@ -18,7 +18,7 @@ OpenYoink Island 把 Mac 顶部中央区域变成一个轻量入口。它可以�
 - 是否启用 Island
 - 是否启用侧边暂存架
 - Island 中是否展示暂存架模块
-- 计时器、电池与正在播放模块
+- 计时器、电池、系统状态、正在播放与快速访问模块
 - 是否允许悬停展开
 
 ## 展开与收起

@@ -441,6 +441,8 @@ private struct GeneralSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
+                    islandModuleControl("Quick Access", id: .folders)
+
                     Text("Open the Island module library to drag the five pinned positions into order.")
                         .font(.caption)
                         .foregroundStyle(.secondary)

@@ -104,11 +104,13 @@ final class ShelfWindowController: NSObject {
     let powerSourceMonitor: PowerSourceMonitor
     let nowPlayingModuleStore: NowPlayingModuleStore
     let systemStatusModuleStore: SystemStatusModuleStore
+    let favoriteFoldersStore: FavoriteFoldersStore
     let islandModuleContainer: IslandModuleContainer
     private let transfersModuleRuntime: TransfersModuleRuntime
     private let timerModuleRuntime: CallbackIslandModuleRuntime
     private let batteryModuleRuntime: CallbackIslandModuleRuntime
     private let mediaModuleRuntime: CallbackIslandModuleRuntime
+    private let favoriteFoldersModuleRuntime: CallbackIslandModuleRuntime
     private var islandGlobalMonitor: Any?
     private var islandLocalMonitor: Any?
     private var islandHoverTask: Task<Void, Never>?
@@ -183,6 +185,7 @@ final class ShelfWindowController: NSObject {
                 .environment(powerSourceMonitor)
                 .environment(nowPlayingModuleStore)
                 .environment(systemStatusModuleStore)
+                .environment(favoriteFoldersStore)
                 .environment(\.bookmarkService, importCoordinator.bookmarkService)
                 .environment(\.dragOutController, dragOutController)
                 .environment(\.quickLookCoordinator, quickLookCoordinator)
@@ -204,11 +207,27 @@ final class ShelfWindowController: NSObject {
                     self?.setMarqueeSelectionActive(isActive)
                 })
         )
+        let dropOverride: DragContainerDropOverride? = presentationStyle == .island
+            ? DragContainerDropOverride(
+                isActive: { [weak self] in
+                    guard let self else { return false }
+                    return self.islandActivityCoordinator.surfaceState.isExpanded
+                        && self.islandActivityCoordinator.selectedModule == .folders
+                },
+                canHandle: { [weak self] pasteboard in
+                    self?.favoriteFoldersStore.canImportFolders(from: pasteboard) ?? false
+                },
+                perform: { [weak self] pasteboard in
+                    self?.favoriteFoldersStore.importFolders(from: pasteboard) ?? false
+                }
+            )
+            : nil
         panel.contentView = DragContainerView(
             store: store,
             coordinator: importCoordinator,
             dropTargetState: dropTargetState,
             gridGeometry: gridGeometry,
+            dropOverride: dropOverride,
             contentViewController: hostingController
         )
         panel.contentView?.wantsLayer = true
@@ -270,6 +289,10 @@ final class ShelfWindowController: NSObject {
                     && islandActivityCoordinator.selectedModule == .system
             }
         )
+        let favoriteFoldersStore = FavoriteFoldersStore(
+            persistence: FavoriteFoldersPersistenceController(),
+            bookmarkService: importCoordinator.bookmarkService
+        )
         let shelfRuntime = CallbackIslandModuleRuntime(
             descriptor: islandModuleRegistry.descriptor(for: .shelf)!
         )
@@ -291,16 +314,23 @@ final class ShelfWindowController: NSObject {
             start: { nowPlayingModuleStore.start() },
             stop: { nowPlayingModuleStore.stop() }
         )
+        let favoriteFoldersModuleRuntime = CallbackIslandModuleRuntime(
+            descriptor: islandModuleRegistry.descriptor(for: .folders)!,
+            start: { favoriteFoldersStore.start() },
+            stop: { favoriteFoldersStore.stop() }
+        )
         self.islandActivityCoordinator = islandActivityCoordinator
         self.islandModuleRegistry = islandModuleRegistry
         self.islandTimerStore = islandTimerStore
         self.powerSourceMonitor = powerSourceMonitor
         self.nowPlayingModuleStore = nowPlayingModuleStore
         self.systemStatusModuleStore = systemStatusModuleStore
+        self.favoriteFoldersStore = favoriteFoldersStore
         self.transfersModuleRuntime = transfersModuleRuntime
         self.timerModuleRuntime = timerModuleRuntime
         self.batteryModuleRuntime = batteryModuleRuntime
         self.mediaModuleRuntime = mediaModuleRuntime
+        self.favoriteFoldersModuleRuntime = favoriteFoldersModuleRuntime
         self.islandModuleContainer = IslandModuleContainer(
             registrations: [
                 IslandModuleRegistration(
@@ -336,6 +366,11 @@ final class ShelfWindowController: NSObject {
                     descriptor: mediaModuleRuntime.descriptor,
                     runtime: mediaModuleRuntime,
                     makeContentView: { _ in AnyView(IslandNowPlayingView()) }
+                ),
+                IslandModuleRegistration(
+                    descriptor: favoriteFoldersModuleRuntime.descriptor,
+                    runtime: favoriteFoldersModuleRuntime,
+                    makeContentView: { _ in AnyView(FavoriteFoldersModuleView()) }
                 ),
             ],
             coordinator: islandActivityCoordinator
@@ -829,6 +864,11 @@ final class ShelfWindowController: NSObject {
             return false
         }
 
+        if sourcePanel === islandPanel,
+           islandActivityCoordinator.selectedModule == .folders {
+            return handleFavoriteFoldersKeyDown(event, modifiers: modifiers)
+        }
+
         if modifiers == [.command, .option],
            event.charactersIgnoringModifiers?.lowercased() == "c" {
             return performKeyboardAction(.copyPath)
@@ -899,6 +939,26 @@ final class ShelfWindowController: NSObject {
                 return true
             }
             hideShelf(animated: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func handleFavoriteFoldersKeyDown(
+        _ event: NSEvent,
+        modifiers: NSEvent.ModifierFlags
+    ) -> Bool {
+        guard modifiers.isEmpty else { return false }
+        switch event.keyCode {
+        case 123: return favoriteFoldersStore.selectRelative(delta: -1)
+        case 124: return favoriteFoldersStore.selectRelative(delta: 1)
+        case 125: return favoriteFoldersStore.selectRelative(delta: 2)
+        case 126: return favoriteFoldersStore.selectRelative(delta: -2)
+        case 36, 76: return favoriteFoldersStore.openSelected()
+        case 51, 117: return favoriteFoldersStore.removeSelected()
+        case 53:
+            collapseIsland(animated: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
             return true
         default:
             return false

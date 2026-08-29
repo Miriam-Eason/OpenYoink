@@ -31,6 +31,7 @@ struct IslandRootView: View {
     @Environment(PowerSourceMonitor.self) private var powerMonitor
     @Environment(NowPlayingModuleStore.self) private var nowPlayingStore
     @Environment(SystemStatusModuleStore.self) private var systemStatusStore
+    @Environment(FavoriteFoldersStore.self) private var favoriteFoldersStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isCompactHovering = false
     @State private var isCompactMediaControlHovering = false
@@ -405,6 +406,10 @@ struct IslandRootView: View {
                total > 0 {
                 Text("CPU \(Int((cpu * 100).rounded()))% · MEM \(Int((Double(used) / Double(total) * 100).rounded()))%")
                     .font(.caption2.monospacedDigit().weight(.semibold))
+            } else if registry.isEnabled(.folders),
+                      coordinator.selectedModule == .folders {
+                Text("Quick Access · \(favoriteFoldersStore.items.count)")
+                    .font(.caption2.weight(.semibold))
             } else {
                 Text(String(localized: "OpenYoink Island"))
                     .font(.caption.weight(.semibold))

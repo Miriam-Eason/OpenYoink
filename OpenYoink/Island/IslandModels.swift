@@ -9,6 +9,7 @@ extension IslandModuleID {
     static let battery = Self(rawValue: "battery")
     static let media = Self(rawValue: "media")
     static let system = Self(rawValue: "system")
+    static let folders = Self(rawValue: "folders")
 }
 
 enum IslandSurfaceState: Equatable, Sendable {
@@ -62,6 +63,8 @@ final class IslandModuleRegistry {
               systemImage: "gauge.with.dots.needle.67percent", order: 4, isCore: false),
         .init(id: .media, title: String(localized: "Now Playing"),
               systemImage: "music.note", order: 5, isCore: false),
+        .init(id: .folders, title: String(localized: "Quick Access"),
+              systemImage: "folder", order: 6, isCore: false),
     ]
 
     private(set) var enabledIDs: Set<IslandModuleID> = [.shelf, .transfers]
