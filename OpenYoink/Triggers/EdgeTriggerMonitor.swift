@@ -48,10 +48,11 @@ struct EdgeDwellTracker: Sendable, Equatable {
     }
 }
 
-/// Screen-edge drag dwell trigger (UX2): while the left mouse button is held
-/// (a drag is in progress), resting the cursor inside the band along the edge
-/// the shelf attaches to for longer than the sensitivity-dependent dwell time
-/// shows the shelf.
+/// Screen-edge file-drag dwell trigger (UX2): while a real file or file promise
+/// is being dragged, resting the cursor inside the band along the edge the shelf
+/// attaches to for longer than the sensitivity-dependent dwell time shows the
+/// shelf. Browser tabs, web URLs, text and in-memory image payloads do not arm
+/// the trigger.
 ///
 /// UX2 设计变更（用户确认）：纯悬停（未按左键的 mouseMoved）不再触发；
 /// 只监听 `leftMouseDragged`。拖拽中的停留时间与带宽比原悬停版更短/更宽
@@ -75,13 +76,22 @@ final class EdgeTriggerMonitor {
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
+    /// Current drag pasteboard types. Kept injectable so the policy boundary is
+    /// deterministic in tests while production samples the system drag board.
+    private let dragPasteboardTypes: @MainActor () -> [NSPasteboard.PasteboardType]
     /// Suppression gate (shelf already visible, frontmost app ignored),
     /// evaluated only when the dwell completes.
     private let shouldSuppress: @MainActor () -> Bool
     private let onTrigger: @MainActor () -> Void
 
-    init(shouldSuppress: @escaping @MainActor () -> Bool,
-         onTrigger: @escaping @MainActor () -> Void) {
+    init(
+        dragPasteboardTypes: @escaping @MainActor () -> [NSPasteboard.PasteboardType] = {
+            NSPasteboard(name: .drag).types ?? []
+        },
+        shouldSuppress: @escaping @MainActor () -> Bool,
+        onTrigger: @escaping @MainActor () -> Void
+    ) {
+        self.dragPasteboardTypes = dragPasteboardTypes
         self.shouldSuppress = shouldSuppress
         self.onTrigger = onTrigger
     }
@@ -136,10 +146,11 @@ final class EdgeTriggerMonitor {
     private func handleMouseMoved(to point: CGPoint, at timestamp: TimeInterval) {
         guard isMonitoring else { return }
         let screen = ShelfWindowController.screen(containing: point)
-        let inside = Self.isInsideEdgeBand(point,
-                                           screenFrame: screen.frame,
-                                           side: side,
-                                           bandWidth: bandWidth)
+        let isFileDrag = PasteboardTypes.hasFileDragContent(in: dragPasteboardTypes())
+        let inside = isFileDrag && Self.isInsideEdgeBand(point,
+                                                         screenFrame: screen.frame,
+                                                         side: side,
+                                                         bandWidth: bandWidth)
         guard tracker?.addSample(isInside: inside, at: timestamp) == true else { return }
         // A suppressed completion (shelf already visible, or the frontmost app
         // is on the ignore list) still counts as fired: the tracker stays

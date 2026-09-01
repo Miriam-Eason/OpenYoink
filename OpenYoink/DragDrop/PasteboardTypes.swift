@@ -133,6 +133,15 @@ enum PasteboardTypes {
         }
     }
 
+    /// 边缘自动展开只接受真实文件来源。浏览器标签页、网页链接、文本和图片
+    /// 数据仍可在 shelf 已手动打开后拖入，但不能仅因靠近屏幕边缘而唤出 shelf。
+    ///
+    /// File promise 表示来源会在落下后生成一个真实文件（例如 Photos / Mail），
+    /// 因此与已经存在于磁盘的 file URL 一样计入文件拖拽。
+    static func hasFileDragContent(in types: [NSPasteboard.PasteboardType]) -> Bool {
+        supports(.fileURL, types: types) || supports(.filePromise, types: types)
+    }
+
     /// 图片数据中优先物化的类型：PNG 直接落盘，TIFF/通用 image 需转码为 PNG。
     static func preferredImageType(in types: [NSPasteboard.PasteboardType]) -> NSPasteboard.PasteboardType? {
         imageTypes.first { types.contains($0) }

@@ -36,6 +36,34 @@ final class PasteboardTypesTests: XCTestCase {
         XCTAssertFalse(PasteboardTypes.supports(.filePromise, types: [.fileURL]))
     }
 
+    // MARK: - Edge auto-reveal file gate
+
+    func testHasFileDragContent_acceptsFileURLAndFilePromise() {
+        XCTAssertTrue(PasteboardTypes.hasFileDragContent(in: [.fileURL]))
+        XCTAssertTrue(PasteboardTypes.hasFileDragContent(
+            in: PasteboardTypes.filePromiseTypes
+        ))
+        XCTAssertTrue(PasteboardTypes.hasFileDragContent(
+            in: [.string, .fileURL, PasteboardTypes.url]
+        ))
+    }
+
+    func testHasFileDragContent_rejectsBrowserTabAndNonFilePayloads() {
+        XCTAssertFalse(PasteboardTypes.hasFileDragContent(
+            in: [PasteboardTypes.url, .string]
+        ))
+        XCTAssertFalse(PasteboardTypes.hasFileDragContent(
+            in: [.png, .tiff, PasteboardTypes.image]
+        ))
+        XCTAssertFalse(PasteboardTypes.hasFileDragContent(
+            in: [.html, .rtf, PasteboardTypes.plainText]
+        ))
+        XCTAssertFalse(PasteboardTypes.hasFileDragContent(
+            in: [NSPasteboard.PasteboardType("com.example.browser-tab")]
+        ))
+        XCTAssertFalse(PasteboardTypes.hasFileDragContent(in: []))
+    }
+
     // MARK: - Priority (F-03: promise → fileURL → image → url → text)
 
     func testPreferredCategory_promiseBeatsEverything() {

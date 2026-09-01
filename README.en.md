@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.4**, adding a Quick Access module for favorite folders. Folders open with the current macOS default file manager, including Finder, QSpace, or another replacement. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.5**. It prevents browser tabs and other non-file drags from revealing the shelf at the screen edge, while real files, folders, and file promises continue to work. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 
