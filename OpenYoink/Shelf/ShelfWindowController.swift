@@ -1405,7 +1405,9 @@ final class ShelfWindowController: NSObject {
     }
 
     func islandDragApproachedTop(at point: CGPoint) -> Bool {
-        guard settings.islandEnabled, settings.islandShelfEnabled else { return false }
+        guard settings.islandEnabled,
+              settings.islandShelfEnabled,
+              settings.islandDragApproachEnabled else { return false }
         let layout = islandLayout(at: point)
         guard layout.activationFrame.contains(point) else { return false }
         islandActivityCoordinator.currentLayout = layout

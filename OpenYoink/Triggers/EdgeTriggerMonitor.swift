@@ -48,6 +48,63 @@ struct EdgeDwellTracker: Sendable, Equatable {
     }
 }
 
+/// Associates drag-pasteboard content with the current mouse gesture.
+///
+/// `NSPasteboard.Name.drag` retains the previous drag after that gesture ends.
+/// Non-file drags can therefore leave a stale `public.file-url` from an earlier
+/// Finder drag visible to an out-of-session type check.
+/// A file drag is eligible only after the pasteboard change count advances
+/// beyond the value captured for this gesture's mouse-down event.
+struct EdgeFileDragTracker: Sendable, Equatable {
+    private var mouseDownChangeCount: Int?
+    private var observedChangeCount: Int?
+    private(set) var hasFreshFileContent = false
+
+    mutating func mouseDown(changeCount: Int) {
+        mouseDownChangeCount = changeCount
+        observedChangeCount = changeCount
+        hasFreshFileContent = false
+    }
+
+    mutating func mouseDragged(changeCount: Int, hasFileContent: Bool) -> Bool {
+        guard let mouseDownChangeCount else { return false }
+        guard observedChangeCount != changeCount else { return hasFreshFileContent }
+
+        observedChangeCount = changeCount
+        if changeCount != mouseDownChangeCount {
+            hasFreshFileContent = hasFileContent
+        }
+        return hasFreshFileContent
+    }
+
+    mutating func mouseUp() {
+        reset()
+    }
+
+    mutating func reset() {
+        mouseDownChangeCount = nil
+        observedChangeCount = nil
+        hasFreshFileContent = false
+    }
+}
+
+struct DragPasteboardSnapshot: Sendable {
+    let changeCount: Int
+    let typeIdentifiers: [String]
+
+    var types: [NSPasteboard.PasteboardType] {
+        typeIdentifiers.map { NSPasteboard.PasteboardType($0) }
+    }
+
+    nonisolated static func current() -> DragPasteboardSnapshot {
+        let pasteboard = NSPasteboard(name: .drag)
+        return DragPasteboardSnapshot(
+            changeCount: pasteboard.changeCount,
+            typeIdentifiers: pasteboard.types?.map(\.rawValue) ?? []
+        )
+    }
+}
+
 /// Screen-edge file-drag dwell trigger (UX2): while a real file or file promise
 /// is being dragged, resting the cursor inside the band along the edge the shelf
 /// attaches to for longer than the sensitivity-dependent dwell time shows the
@@ -71,27 +128,21 @@ final class EdgeTriggerMonitor {
     private(set) var isMonitoring = false
 
     private var tracker: EdgeDwellTracker?
+    private var fileDragTracker = EdgeFileDragTracker()
     private var side: SettingsStore.ShelfPosition = .right
     private var bandWidth: CGFloat = 4
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
-    /// Current drag pasteboard types. Kept injectable so the policy boundary is
-    /// deterministic in tests while production samples the system drag board.
-    private let dragPasteboardTypes: @MainActor () -> [NSPasteboard.PasteboardType]
     /// Suppression gate (shelf already visible, frontmost app ignored),
     /// evaluated only when the dwell completes.
     private let shouldSuppress: @MainActor () -> Bool
     private let onTrigger: @MainActor () -> Void
 
     init(
-        dragPasteboardTypes: @escaping @MainActor () -> [NSPasteboard.PasteboardType] = {
-            NSPasteboard(name: .drag).types ?? []
-        },
         shouldSuppress: @escaping @MainActor () -> Bool,
         onTrigger: @escaping @MainActor () -> Void
     ) {
-        self.dragPasteboardTypes = dragPasteboardTypes
         self.shouldSuppress = shouldSuppress
         self.onTrigger = onTrigger
     }
@@ -109,20 +160,25 @@ final class EdgeTriggerMonitor {
         self.bandWidth = bandWidth
         tracker = EdgeDwellTracker(dwellTime: dwellTime)
 
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+        let mask: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseDragged, .leftMouseUp]
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] event in
             guard let self else { return }
             let location = NSEvent.mouseLocation
+            let type = event.type
             let timestamp = event.timestamp
+            let snapshot = DragPasteboardSnapshot.current()
             Task { @MainActor in
-                self.handleMouseMoved(to: location, at: timestamp)
+                self.handle(eventType: type, at: location, timestamp: timestamp, snapshot: snapshot)
             }
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
             guard let self else { return event }
             let location = NSEvent.mouseLocation
+            let type = event.type
             let timestamp = event.timestamp
+            let snapshot = DragPasteboardSnapshot.current()
             Task { @MainActor in
-                self.handleMouseMoved(to: location, at: timestamp)
+                self.handle(eventType: type, at: location, timestamp: timestamp, snapshot: snapshot)
             }
             return event
         }
@@ -140,13 +196,35 @@ final class EdgeTriggerMonitor {
             self.localMonitor = nil
         }
         tracker = nil
+        fileDragTracker.reset()
         isMonitoring = false
     }
 
-    private func handleMouseMoved(to point: CGPoint, at timestamp: TimeInterval) {
+    private func handle(eventType: NSEvent.EventType,
+                        at point: CGPoint,
+                        timestamp: TimeInterval,
+                        snapshot: DragPasteboardSnapshot) {
         guard isMonitoring else { return }
+        switch eventType {
+        case .leftMouseDown:
+            fileDragTracker.mouseDown(changeCount: snapshot.changeCount)
+            tracker?.reset()
+            return
+        case .leftMouseUp:
+            fileDragTracker.mouseUp()
+            tracker?.reset()
+            return
+        case .leftMouseDragged:
+            break
+        default:
+            return
+        }
+
         let screen = ShelfWindowController.screen(containing: point)
-        let isFileDrag = PasteboardTypes.hasFileDragContent(in: dragPasteboardTypes())
+        let isFileDrag = fileDragTracker.mouseDragged(
+            changeCount: snapshot.changeCount,
+            hasFileContent: PasteboardTypes.hasFileDragContent(in: snapshot.types)
+        )
         let inside = isFileDrag && Self.isInsideEdgeBand(point,
                                                          screenFrame: screen.frame,
                                                          side: side,

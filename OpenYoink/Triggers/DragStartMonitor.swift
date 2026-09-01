@@ -131,6 +131,7 @@ final class DragStartMonitor {
     private(set) var isDragInProgress = false
 
     private var tracker: DragGestureTracker?
+    private var fileDragTracker = EdgeFileDragTracker()
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
@@ -160,16 +161,18 @@ final class DragStartMonitor {
             guard let self else { return }
             let location = NSEvent.mouseLocation
             let type = event.type
+            let snapshot = DragPasteboardSnapshot.current()
             Task { @MainActor in
-                self.handle(eventType: type, at: location)
+                self.handle(eventType: type, at: location, snapshot: snapshot)
             }
         }
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
             guard let self else { return event }
             let location = NSEvent.mouseLocation
             let type = event.type
+            let snapshot = DragPasteboardSnapshot.current()
             Task { @MainActor in
-                self.handle(eventType: type, at: location)
+                self.handle(eventType: type, at: location, snapshot: snapshot)
             }
             return event
         }
@@ -187,16 +190,24 @@ final class DragStartMonitor {
             self.localMonitor = nil
         }
         tracker = nil
+        fileDragTracker.reset()
         isMonitoring = false
         isDragInProgress = false
     }
 
-    private func handle(eventType: NSEvent.EventType, at point: CGPoint) {
+    private func handle(eventType: NSEvent.EventType,
+                        at point: CGPoint,
+                        snapshot: DragPasteboardSnapshot) {
         guard isMonitoring else { return }
         switch eventType {
         case .leftMouseDown:
             tracker?.mouseDown(at: point)
+            fileDragTracker.mouseDown(changeCount: snapshot.changeCount)
         case .leftMouseDragged:
+            guard fileDragTracker.mouseDragged(
+                changeCount: snapshot.changeCount,
+                hasFileContent: PasteboardTypes.hasFileDragContent(in: snapshot.types)
+            ) else { return }
             let didBegin = tracker?.mouseDragged(to: point) == true
             guard tracker?.phase == .dragging else { return }
             // EdgeTab: 投放暗示状态与抑制无关 —— 被抑制（忽略列表 / 正在拖动
@@ -208,6 +219,7 @@ final class DragStartMonitor {
             if didBegin { onDragStart() }
             onDragUpdate(point)
         case .leftMouseUp:
+            fileDragTracker.mouseUp()
             guard tracker?.mouseUp() == true else { return }
             isDragInProgress = false
             onDragEnd()

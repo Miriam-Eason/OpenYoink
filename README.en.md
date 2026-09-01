@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.5**. It prevents browser tabs and other non-file drags from revealing the shelf at the screen edge, while real files, folders, and file promises continue to work. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.6**. File drags no longer expand the Island near the top by default, avoiding interference with browser tab rearrangement. Real files can still reveal the side shelf at the screen edge, and top activation can be enabled independently in Settings. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 

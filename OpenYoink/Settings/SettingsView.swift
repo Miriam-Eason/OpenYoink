@@ -413,6 +413,10 @@ private struct GeneralSettingsTab: View {
                     Text("Click is always available. Hover waits briefly before expanding.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    Toggle("Expand Island when dragging files near the top",
+                           isOn: $settings.islandDragApproachEnabled)
+                        .accessibilityIdentifier("settings.islandDragApproach")
                 }
             }
 

@@ -4,6 +4,43 @@ import XCTest
 
 /// 边缘触发纯逻辑：触发带判定（isInsideEdgeBand）与停留跟踪（EdgeDwellTracker）。
 final class EdgeTriggerMonitorTests: XCTestCase {
+    // MARK: - Current-gesture file drag gate
+
+    func testFileDrag_staleFilePasteboardAtMouseDownDoesNotCount() {
+        var tracker = EdgeFileDragTracker()
+        tracker.mouseDown(changeCount: 21)
+
+        XCTAssertFalse(tracker.mouseDragged(changeCount: 21, hasFileContent: true))
+        XCTAssertFalse(tracker.hasFreshFileContent)
+    }
+
+    func testFileDrag_freshFilePasteboardAfterMouseDownCounts() {
+        var tracker = EdgeFileDragTracker()
+        tracker.mouseDown(changeCount: 21)
+
+        XCTAssertTrue(tracker.mouseDragged(changeCount: 22, hasFileContent: true))
+        XCTAssertTrue(tracker.mouseDragged(changeCount: 22, hasFileContent: true))
+    }
+
+    func testFileDrag_freshBrowserPayloadDoesNotCount() {
+        var tracker = EdgeFileDragTracker()
+        tracker.mouseDown(changeCount: 21)
+
+        XCTAssertFalse(tracker.mouseDragged(changeCount: 22, hasFileContent: false))
+        XCTAssertFalse(tracker.hasFreshFileContent)
+    }
+
+    func testFileDrag_newGestureCannotReusePreviousFileDrag() {
+        var tracker = EdgeFileDragTracker()
+        tracker.mouseDown(changeCount: 21)
+        XCTAssertTrue(tracker.mouseDragged(changeCount: 22, hasFileContent: true))
+        tracker.mouseUp()
+
+        XCTAssertFalse(tracker.mouseDragged(changeCount: 22, hasFileContent: true))
+        tracker.mouseDown(changeCount: 22)
+        XCTAssertFalse(tracker.mouseDragged(changeCount: 22, hasFileContent: true))
+    }
+
     // MARK: - Edge band
 
     private let frame = CGRect(x: 0, y: 0, width: 1000, height: 800)

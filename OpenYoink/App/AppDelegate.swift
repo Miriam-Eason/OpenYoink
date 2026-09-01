@@ -408,6 +408,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleDragUpdate(at point: CGPoint) {
         guard settingsStore.islandEnabled,
               settingsStore.islandShelfEnabled,
+              settingsStore.islandDragApproachEnabled,
               settingsStore.dragAutoAppearMode != .off else { return }
         if shelfPresentationCoordinator.dragApproachedTop(at: point) {
             islandDragWasActivated = true
@@ -719,6 +720,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             && settingsStore.shelfPosition != .custom
         let islandDragActive = settingsStore.islandEnabled
             && settingsStore.islandShelfEnabled
+            && settingsStore.islandDragApproachEnabled
             && settingsStore.dragAutoAppearMode != .off
         let classicImmediateActive = settingsStore.effectivePreferredShelfSurface == .classic
             && settingsStore.dragAutoAppearMode == .immediate

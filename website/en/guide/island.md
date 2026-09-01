@@ -12,4 +12,4 @@ The classic edge shelf and Island are independent entrances to the same shelf. Y
 
 The optional Quick Access module keeps favorite folders in a compact grid. Double-clicking a folder uses the current macOS default file manager, so Finder, QSpace, and other replacements work without an app-specific setting. Removing a favorite never removes the actual folder.
 
-Click the compact Island to expand it. Dragging near the top-center switches to the Shelf module. Press `Esc`, click outside, or click the center of the expanded Island to collapse it.
+Click the compact Island to expand it. Top-edge drag approach stays off by default so browser tab rearrangement is not obstructed; it can be enabled independently in Settings to switch to the Shelf module when files approach the top center. Press `Esc`, click outside, or click the center of the expanded Island to collapse it.

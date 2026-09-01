@@ -237,6 +237,16 @@ final class SettingsStore {
         didSet { defaults.set(islandHoverRevealEnabled, forKey: Keys.islandHoverRevealEnabled) }
     }
 
+    /// Expands the Island Shelf when a drag approaches the top-center target.
+    /// Off by default so browser tab rearrangement near the menu bar remains
+    /// unobstructed; the side shelf keeps its independent edge-drag behavior.
+    var islandDragApproachEnabled: Bool {
+        didSet {
+            defaults.set(islandDragApproachEnabled,
+                         forKey: Keys.islandDragApproachEnabled)
+        }
+    }
+
     var islandTimerEnabled: Bool {
         didSet {
             defaults.set(islandTimerEnabled, forKey: Keys.islandTimerEnabled)
@@ -508,6 +518,7 @@ final class SettingsStore {
         static let islandShelfEnabled = prefix + "islandShelfEnabled"
         static let preferredShelfSurface = prefix + "preferredShelfSurface"
         static let islandHoverRevealEnabled = prefix + "islandHoverRevealEnabled"
+        static let islandDragApproachEnabled = prefix + "islandDragApproachEnabled"
         static let islandTimerEnabled = prefix + "islandTimerEnabled"
         static let islandBatteryEnabled = prefix + "islandBatteryEnabled"
         static let islandFullChargeAlertEnabled = prefix + "islandFullChargeAlertEnabled"
@@ -592,6 +603,7 @@ final class SettingsStore {
             Keys.islandShelfEnabled: true,
             Keys.preferredShelfSurface: PreferredShelfSurface.island.rawValue,
             Keys.islandHoverRevealEnabled: false,
+            Keys.islandDragApproachEnabled: false,
             Keys.islandTimerEnabled: true,
             Keys.islandBatteryEnabled: true,
             Keys.islandFullChargeAlertEnabled: false,
@@ -678,6 +690,9 @@ final class SettingsStore {
         let resolvedIslandHoverRevealEnabled = defaults.bool(
             forKey: Keys.islandHoverRevealEnabled
         )
+        let resolvedIslandDragApproachEnabled = defaults.bool(
+            forKey: Keys.islandDragApproachEnabled
+        )
         let resolvedIslandTimerEnabled = defaults.bool(forKey: Keys.islandTimerEnabled)
         let resolvedIslandBatteryEnabled = defaults.bool(forKey: Keys.islandBatteryEnabled)
         let resolvedIslandFullChargeAlertEnabled = defaults.bool(
@@ -685,6 +700,7 @@ final class SettingsStore {
         )
         let resolvedIslandMediaEnabled = defaults.bool(forKey: Keys.islandMediaEnabled)
         islandHoverRevealEnabled = resolvedIslandHoverRevealEnabled
+        islandDragApproachEnabled = resolvedIslandDragApproachEnabled
         islandTimerEnabled = resolvedIslandTimerEnabled
         islandBatteryEnabled = resolvedIslandBatteryEnabled
         islandFullChargeAlertEnabled = resolvedIslandFullChargeAlertEnabled

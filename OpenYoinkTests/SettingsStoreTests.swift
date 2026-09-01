@@ -55,6 +55,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.preferredShelfSurface, .island)
         XCTAssertEqual(store.effectivePreferredShelfSurface, .classic)
         XCTAssertFalse(store.islandHoverRevealEnabled)
+        XCTAssertFalse(store.islandDragApproachEnabled)
         XCTAssertTrue(store.islandTimerEnabled)
         XCTAssertTrue(store.islandBatteryEnabled)
         XCTAssertFalse(store.islandMediaEnabled)
@@ -169,6 +170,7 @@ final class SettingsStoreTests: XCTestCase {
         store.shelfPlacement = .island
         store.islandDisplayTarget = .display("display-uuid")
         store.islandHoverRevealEnabled = true
+        store.islandDragApproachEnabled = true
         store.islandTimerEnabled = false
         store.islandBatteryEnabled = false
         store.islandFullChargeAlertEnabled = true
@@ -178,6 +180,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.shelfPresentationMode, .island)
         XCTAssertEqual(reloaded.islandDisplayTarget, .display("display-uuid"))
         XCTAssertTrue(reloaded.islandHoverRevealEnabled)
+        XCTAssertTrue(reloaded.islandDragApproachEnabled)
         XCTAssertFalse(reloaded.islandTimerEnabled)
         XCTAssertFalse(reloaded.islandBatteryEnabled)
         XCTAssertTrue(reloaded.islandFullChargeAlertEnabled)

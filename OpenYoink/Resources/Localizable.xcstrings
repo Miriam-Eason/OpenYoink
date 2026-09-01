@@ -2666,6 +2666,12 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "悬停时展开灵动岛" } }
       }
     },
+    "Expand Island when dragging files near the top" : {
+      "extractionState" : "manual", "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Expand Island when dragging files near the top" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "拖拽文件靠近顶部时展开灵动岛" } }
+      }
+    },
     "Experimental media support may stop working after a macOS update. It stays off unless you enable it." : {
       "extractionState" : "manual", "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Experimental media support may stop working after a macOS update. It stays off unless you enable it." } },
