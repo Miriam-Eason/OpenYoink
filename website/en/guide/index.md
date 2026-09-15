@@ -15,6 +15,8 @@ OpenYoink is a temporary landing spot for files, folders, images, text, and link
 
 If you are comparing macOS drag-and-drop utilities, read [Why OpenYoink](./open-source-drag-shelf) for common workflows, local-first behavior, and how a drag shelf differs from the clipboard.
 
-::: tip Available in v1.6.6
+::: tip Available in v1.6.7
+Narrower compact Island wings and hit targets reduce overlap with menu bar icons. Timer text adapts to the available width.
+
 The top Island no longer responds to drag approach by default, so it stays out of the way while rearranging browser tabs. Real files still reveal the side shelf, and top activation remains available as an independent setting. The Quick Access module introduced in v1.6.4 continues to follow the current macOS default file manager.
 :::

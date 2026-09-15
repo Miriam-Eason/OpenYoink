@@ -20,7 +20,9 @@ enum IslandGeometryResolver {
         var topInset: CGFloat { cameraHousingFrame.height }
     }
 
-    static let compactWingWidth: CGFloat = 58
+    /// Keep the visual wings and their hit targets narrow: these overlays share
+    /// the menu-bar row with status items, which macOS does not move aside for us.
+    static let compactWingWidth: CGFloat = 40
     /// A physical camera housing cannot receive pointer events. Extending the
     /// attached surface slightly below it creates one obvious click target while
     /// keeping the top edge fused to the screen hardware.

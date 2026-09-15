@@ -271,6 +271,8 @@ struct IslandRootView: View {
             } else if case .running = timerStore.state {
                 Text(timerStore.formattedRemaining)
                     .font(.caption2.monospacedDigit().weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             } else if registry.isEnabled(.shelf) {
                 Text("\(shelfStore.items.count)")
                     .font(.caption.monospacedDigit().weight(.semibold))

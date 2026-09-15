@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.6**. File drags no longer expand the Island near the top by default, avoiding interference with browser tab rearrangement. Real files can still reveal the side shelf at the screen edge, and top activation can be enabled independently in Settings. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.7**. Narrower compact Island wings and matching hit targets reduce overlap with menu bar icons, while timer text adapts to the available space. Top-edge drag expansion remains off by default; side-shelf file dragging works as before. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 
