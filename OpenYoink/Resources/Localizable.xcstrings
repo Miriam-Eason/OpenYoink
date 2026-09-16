@@ -948,6 +948,18 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "为空时自动隐藏" } }
       }
     },
+    "Keep expanded after dropping" : {
+      "extractionState" : "manual", "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep expanded after dropping" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "拖入后保持展开" } }
+      }
+    },
+    "Only affects automatic hiding after a successful drop. Drag-out and empty-shelf settings still apply." : {
+      "extractionState" : "manual", "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only affects automatic hiding after a successful drop. Drag-out and empty-shelf settings still apply." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅影响成功拖入后的自动隐藏；拖出和清空后的自动隐藏设置仍会生效。" } }
+      }
+    },
     "Hide Shelf" : {
       "extractionState" : "manual",
       "comment" : "Menu bar item and inner-edge collapse handle label/tooltip",

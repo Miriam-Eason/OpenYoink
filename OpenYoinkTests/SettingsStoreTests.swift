@@ -23,6 +23,7 @@ final class SettingsStoreTests: XCTestCase {
         store.shelfPosition = .left
         store.shelfWidth = 420
         store.autoHide = true
+        store.keepShelfOpenAfterDrop = true
         store.dragOutRemovalPolicy = .ask
         store.language = .chinese
 
@@ -30,6 +31,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.shelfPosition, .left)
         XCTAssertEqual(reloaded.shelfWidth, 420)
         XCTAssertTrue(reloaded.autoHide)
+        XCTAssertTrue(reloaded.keepShelfOpenAfterDrop)
         XCTAssertEqual(reloaded.dragOutRemovalPolicy, .ask)
         XCTAssertEqual(reloaded.language, .chinese)
     }
@@ -42,6 +44,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.shelfPosition, .right)
         XCTAssertEqual(store.shelfWidth, 320)
         XCTAssertFalse(store.autoHide)
+        XCTAssertFalse(store.keepShelfOpenAfterDrop)
         XCTAssertEqual(store.dragOutRemovalPolicy, .keep)
         XCTAssertEqual(store.language, .system)
         XCTAssertEqual(store.onboardingVersion, 0)

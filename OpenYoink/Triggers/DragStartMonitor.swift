@@ -63,7 +63,8 @@ struct DragGestureTracker: Sendable, Equatable {
 ///   不可见 —— 拖拽前已可见说明是用户手动唤出的，本轮不动它）；
 /// - 本轮拖拽中有内容成功落入 shelf（`DropImportCoordinator.onImportHandled`）
 ///   → `noteImport()` 复位「无落入」假设；
-/// - 拖拽结束：`shownAutomatically && !receivedImport` → 调用方自动收回。
+/// - 拖拽结束：自动唤出的 shelf 默认收回；仅当本轮有内容落入且用户开启
+///   「拖入后保持展开」时保持展开。
 struct DragAutoShowSession: Sendable, Equatable {
     /// 本轮是否处于已确认的拖拽会话中（mouseDown 阈值跨越 → mouseUp）。
     private(set) var isDragging = false
@@ -91,15 +92,24 @@ struct DragAutoShowSession: Sendable, Equatable {
         receivedImport = true
     }
 
-    /// 拖拽结束。返回 `true` = 本轮是自动唤出且没有任何内容落入，调用方
-    /// 应动画收回 shelf；返回后会话复位（幂等，重复抬起安全）。
-    mutating func dragEnded() -> Bool {
+    /// A successful drop may be delivered just after the global mouse-up
+    /// monitor. Callers that keep the shelf open after a drop can use this
+    /// snapshot to briefly defer a no-import hide and wait for that callback.
+    var shouldAwaitLateImport: Bool {
+        isDragging && shownAutomatically && !receivedImport
+    }
+
+    /// 拖拽结束。返回 `true` = 本轮自动唤出的 shelf 应动画收回。成功拖入
+    /// 仅在 `keepShelfOpenAfterDrop` 开启时阻止这次收回；返回后会话复位
+    /// （幂等，重复抬起安全）。
+    mutating func dragEnded(keepShelfOpenAfterDrop: Bool = false) -> Bool {
         defer {
             isDragging = false
             shownAutomatically = false
             receivedImport = false
         }
-        return isDragging && shownAutomatically && !receivedImport
+        return isDragging && shownAutomatically
+            && !(receivedImport && keepShelfOpenAfterDrop)
     }
 }
 

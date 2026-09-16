@@ -77,12 +77,35 @@ final class DragStartMonitorTests: XCTestCase {
         XCTAssertFalse(session.dragEnded())
     }
 
-    func testAutoShow_importDuringDrag_keepsShelf() {
+    func testAutoShow_importDuringDrag_hidesByDefault() {
         var session = DragAutoShowSession()
         session.dragBegan()
         session.markShownAutomatically()
         session.noteImport()
-        XCTAssertFalse(session.dragEnded())
+        XCTAssertTrue(session.dragEnded())
+    }
+
+    func testAutoShow_withoutImport_canAwaitLateDropCallback() {
+        var session = DragAutoShowSession()
+        session.dragBegan()
+        session.markShownAutomatically()
+        XCTAssertTrue(session.shouldAwaitLateImport)
+    }
+
+    func testAutoShow_withImport_doesNotAwaitLateDropCallback() {
+        var session = DragAutoShowSession()
+        session.dragBegan()
+        session.markShownAutomatically()
+        session.noteImport()
+        XCTAssertFalse(session.shouldAwaitLateImport)
+    }
+
+    func testAutoShow_importDuringDrag_keepsShelfWhenConfigured() {
+        var session = DragAutoShowSession()
+        session.dragBegan()
+        session.markShownAutomatically()
+        session.noteImport()
+        XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: true))
     }
 
     func testAutoShow_markedOutsideDrag_isIgnored() {
