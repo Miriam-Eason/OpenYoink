@@ -31,7 +31,7 @@
 </a>
 
 > [!NOTE]
-> 当前稳定版 **v1.6.7** 收窄灵动岛紧凑态两侧及点击区域，减少对菜单栏图标的遮挡，并适配计时文字。顶部拖拽展开仍默认关闭，侧边文件拖拽保持原有行为。完整教程见[使用文档](https://muqy1818.github.io/OpenYoink/guide/)。
+> 当前稳定版 **v1.6.8** 新增侧边暂存架“拖入后保持展开”设置，默认保留原有行为，并修复拖放回调顺序导致的意外收起。顶部灵动岛行为不变。感谢社区贡献者 [@Miriam-Eason](https://github.com/Miriam-Eason) 的 [PR #1](https://github.com/MuQY1818/OpenYoink/pull/1)。完整教程见[使用文档](https://muqy1818.github.io/OpenYoink/guide/)。
 
 ## 它解决什么问题
 

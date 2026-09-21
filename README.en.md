@@ -31,7 +31,7 @@ edge of your screen or inside the Mac notch, then drag them out wherever they be
 </a>
 
 > [!NOTE]
-> The current stable release is **v1.6.7**. Narrower compact Island wings and matching hit targets reduce overlap with menu bar icons, while timer text adapts to the available space. Top-edge drag expansion remains off by default; side-shelf file dragging works as before. See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
+> The current stable release is **v1.6.8**. A new side-shelf setting lets you keep the shelf expanded after dropping, preserving the existing default. Drag completion now handles callback ordering without a fixed timeout; Island behavior is unchanged. Thanks to [@Miriam-Eason](https://github.com/Miriam-Eason) for [PR #1](https://github.com/MuQY1818/OpenYoink/pull/1). See the [guide](https://muqy1818.github.io/OpenYoink/en/guide/) for the complete walkthrough.
 
 ## The problem it solves
 
