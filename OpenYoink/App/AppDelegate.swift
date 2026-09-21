@@ -193,8 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }, onTrigger: { [weak self] in
         guard let self, !self.appState.isShelfVisible else { return }
         // UX2: 拖拽贴边唤出也记入自动唤出会话（拖空无落入自动收回）。
-        self.dragAutoShowSession.markShownAutomatically()
         self.shelfPresentationCoordinator.showClassic(animated: true)
+        self.dragAutoShowSession.markShownAutomatically()
     })
     /// UX1: 拖拽开始监听（按下 → 位移超阈值判定拖拽 → 抬起结束）。
     /// 同时承担 UX2 贴边唤出的会话记帐：只要任一拖拽驱动唤出路径可能
@@ -285,6 +285,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dropImportCoordinator.onImportHandled = { [weak self] in
             self?.dragAutoShowSession.noteImport()
             self?.shelfWindowController.promoteClassicHoverPreviewIfNeeded()
+        }
+        shelfWindowController.onClassicDestinationEntered = { [weak self] sequenceNumber in
+            self?.dragAutoShowSession.destinationEntered(sequenceNumber: sequenceNumber)
+        }
+        shelfWindowController.onClassicDestinationEnded = { [weak self] sequenceNumber, accepted in
+            guard let self else { return }
+            if self.dragAutoShowSession.destinationEnded(sequenceNumber: sequenceNumber, accepted: accepted),
+               self.appState.isShelfVisible {
+                self.shelfPresentationCoordinator.hideClassic(animated: true)
+            }
+        }
+        shelfWindowController.onClassicPresentationRequested = { [weak self] in
+            self?.dragAutoShowSession.cancelAutomaticHide()
         }
         if !isUITesting {
             applyTriggerSettings()
@@ -401,8 +414,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard settingsStore.classicShelfEnabled else { return }
         guard settingsStore.dragAutoAppearMode == .immediate else { return }
         guard !appState.isShelfVisible else { return }
-        dragAutoShowSession.markShownAutomatically()
         shelfPresentationCoordinator.showClassic(animated: true)
+        dragAutoShowSession.markShownAutomatically()
     }
 
     private func handleDragUpdate(at point: CGPoint) {
@@ -415,24 +428,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// UX1: 拖拽结束。本轮为自动唤出且没有内容落入 → 动画收回；
-    /// 其余情况（手动唤出、已有导入、用户拖拽中已手动隐藏）不动。
+    /// UX1: 未投放时自动收回；成功拖入默认保持展开，可由设置关闭。
+    /// 本地接收区的回调可能晚于 mouse-up；状态机等待真实完成事件。
     ///
     /// 任务二审查结论（拖拽中可见性不变式）：本路径不会「拖拽中误隐」——
     /// DragStartMonitor 在派发 onDragEnd 前已把 isDragInProgress 复位，
-    /// 收回只发生在抬起之后；且成功落入（含已派发的异步物化）经
-    /// onImportHandled → noteImport 置位，dragEnded 必返回 false。
+    /// 收回只发生在抬起之后；成功落入（含已派发的异步物化）经
+    /// onImportHandled → noteImport 置位，并由设置决定是否保持展开。
     /// 空架自动隐藏（拖拽中唯一可能误隐的路径）已在 EmptyShelfAutoHideRule
     /// 内按 isDragInProgress 门控。
     private func handleDragEnd() {
         let imported = dragAutoShowSession.receivedImport
-        let shouldHideClassic = dragAutoShowSession.dragEnded()
+        let shouldHideClassic = dragAutoShowSession.dragEnded(
+            keepShelfOpenAfterDrop: settingsStore.keepShelfOpenAfterDrop
+        )
         if islandDragWasActivated {
             shelfPresentationCoordinator.dragEnded(imported: imported)
             islandDragWasActivated = false
         }
         guard shouldHideClassic, appState.isShelfVisible else { return }
-        shelfPresentationCoordinator.hide(animated: true)
+        shelfPresentationCoordinator.hideClassic(animated: true)
     }
 
     // MARK: - UX3 clipboard save

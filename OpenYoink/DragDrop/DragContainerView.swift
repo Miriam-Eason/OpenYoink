@@ -53,6 +53,9 @@ final class DragContainerView: NSView {
     /// S10: 卡片网格几何（SwiftUI 上报），拖入插入定位用。
     private let gridGeometry: ShelfGridGeometry
     private let dropOverride: DragContainerDropOverride?
+    private let onDestinationEntered: (Int) -> Void
+    private let onDestinationEnded: (Int, Bool) -> Void
+    private var currentDestinationSequenceNumber: Int?
     /// 持有的 hosting controller（addSubview 只 retain 视图，controller 需显式持有）。
     private let contentViewController: NSViewController
 
@@ -61,12 +64,16 @@ final class DragContainerView: NSView {
          dropTargetState: DropTargetState,
          gridGeometry: ShelfGridGeometry,
          dropOverride: DragContainerDropOverride? = nil,
+         onDestinationEntered: @escaping (Int) -> Void = { _ in },
+         onDestinationEnded: @escaping (Int, Bool) -> Void = { _, _ in },
          contentViewController: NSViewController) {
         self.store = store
         self.coordinator = coordinator
         self.dropTargetState = dropTargetState
         self.gridGeometry = gridGeometry
         self.dropOverride = dropOverride
+        self.onDestinationEntered = onDestinationEntered
+        self.onDestinationEnded = onDestinationEnded
         self.contentViewController = contentViewController
         super.init(frame: .zero)
 
@@ -99,6 +106,8 @@ final class DragContainerView: NSView {
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        currentDestinationSequenceNumber = sender.draggingSequenceNumber
+        onDestinationEntered(sender.draggingSequenceNumber)
         if let dropOverride, dropOverride.isActive() {
             guard sender.draggingSource == nil,
                   dropOverride.canHandle(sender.draggingPasteboard) else {
@@ -124,6 +133,9 @@ final class DragContainerView: NSView {
     }
 
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        // The global monitor delivers drag-start on the main actor. Repeating
+        // this idempotent registration also covers entering before that delivery.
+        onDestinationEntered(sender.draggingSequenceNumber)
         if let dropOverride, dropOverride.isActive() {
             guard sender.draggingSource == nil,
                   dropOverride.canHandle(sender.draggingPasteboard) else {
@@ -158,9 +170,12 @@ final class DragContainerView: NSView {
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        var accepted = false
+        defer { onDestinationEnded(sender.draggingSequenceNumber, accepted) }
         if let dropOverride, dropOverride.isActive() {
             guard dropOverride.canHandle(sender.draggingPasteboard) else { return false }
-            return dropOverride.perform(sender.draggingPasteboard)
+            accepted = dropOverride.perform(sender.draggingPasteboard)
+            return accepted
         }
         // F-05: 落下瞬间以实时修饰键判定模式（⌘ = 剪切移入）。
         // 教程文件永远走引用导入；即使用户此刻按住 ⌘，也不能把应用自己
@@ -187,7 +202,17 @@ final class DragContainerView: NSView {
         store.add(contentsOf: result.items, at: dropTargetState.insertionIndex)
         coordinator.noteSynchronousTutorialImport(from: sender.draggingPasteboard,
                                                    items: result.items)
+        accepted = true
         return true
+    }
+
+    override func draggingEnded(_ sender: NSDraggingInfo) {
+        // Cancellation, rejection, or a drop elsewhere has no perform callback.
+        // After perform this is an idempotent no-op in the session state machine.
+        onDestinationEnded(sender.draggingSequenceNumber, false)
+        guard currentDestinationSequenceNumber == sender.draggingSequenceNumber else { return }
+        currentDestinationSequenceNumber = nil
+        dropTargetState.reset()
     }
 
     override func concludeDragOperation(_ sender: NSDraggingInfo?) {

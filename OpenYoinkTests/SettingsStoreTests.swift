@@ -23,6 +23,7 @@ final class SettingsStoreTests: XCTestCase {
         store.shelfPosition = .left
         store.shelfWidth = 420
         store.autoHide = true
+        store.keepShelfOpenAfterDrop = true
         store.dragOutRemovalPolicy = .ask
         store.language = .chinese
 
@@ -30,6 +31,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.shelfPosition, .left)
         XCTAssertEqual(reloaded.shelfWidth, 420)
         XCTAssertTrue(reloaded.autoHide)
+        XCTAssertTrue(reloaded.keepShelfOpenAfterDrop)
         XCTAssertEqual(reloaded.dragOutRemovalPolicy, .ask)
         XCTAssertEqual(reloaded.language, .chinese)
     }
@@ -42,6 +44,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.shelfPosition, .right)
         XCTAssertEqual(store.shelfWidth, 320)
         XCTAssertFalse(store.autoHide)
+        XCTAssertTrue(store.keepShelfOpenAfterDrop)
         XCTAssertEqual(store.dragOutRemovalPolicy, .keep)
         XCTAssertEqual(store.language, .system)
         XCTAssertEqual(store.onboardingVersion, 0)
@@ -66,6 +69,27 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.islandModuleConfiguration.pinnedModuleIDs,
                        [.shelf, .timer, .system])
         XCTAssertTrue(store.classicShelfHoverRevealEnabled)
+    }
+
+    func testExistingUserKeepsSuccessfulDropBehaviorWithoutNewPreference() throws {
+        let (defaults, name) = try makeSuite()
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(1, forKey: "OpenYoink.onboardingVersion")
+        defaults.set(true, forKey: "OpenYoink.autoHide")
+        let store = SettingsStore(defaults: defaults)
+        XCTAssertTrue(store.keepShelfOpenAfterDrop)
+        XCTAssertTrue(store.autoHide, "Drag-out preference remains independent")
+    }
+
+    func testKeepShelfOpenAfterDrop_explicitFalseSurvivesReload() throws {
+        let (defaults, name) = try makeSuite()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = SettingsStore(defaults: defaults)
+        store.keepShelfOpenAfterDrop = false
+        let reloaded = SettingsStore(defaults: defaults)
+        XCTAssertFalse(reloaded.keepShelfOpenAfterDrop)
+        XCTAssertFalse(reloaded.autoHide)
+        XCTAssertTrue(reloaded.autoHideWhenEmpty)
     }
 
     func testExistingUserMigratesLegacyModuleOrderWithoutEnablingSystem() throws {

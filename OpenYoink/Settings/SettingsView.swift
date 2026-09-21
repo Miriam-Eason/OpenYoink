@@ -341,6 +341,11 @@ private struct GeneralSettingsTab: View {
 
                     Toggle("Hide after dragging out", isOn: $settings.autoHide)
 
+                    Toggle("Keep expanded after dropping", isOn: $settings.keepShelfOpenAfterDrop)
+                    Text("Applies only to the side shelf opened automatically during a drag. Drag-out and empty-shelf settings still apply.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     // UX6: 非空→空迁移时自动收回（手动唤出的空架不受影响）。
                     Toggle("Hide automatically when empty", isOn: $settings.autoHideWhenEmpty)
 

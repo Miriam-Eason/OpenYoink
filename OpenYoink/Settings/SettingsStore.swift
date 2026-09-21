@@ -334,6 +334,14 @@ final class SettingsStore {
         didSet { defaults.set(autoHide, forKey: Keys.autoHide) }
     }
 
+    /// Keep an automatically revealed side shelf open after a successful
+    /// drag-in. This deliberately affects only the drag-in completion path:
+    /// drag-out and empty-shelf auto-hide retain their own settings.
+    /// Default: true, preserving successful-drop behavior for existing users.
+    var keepShelfOpenAfterDrop: Bool {
+        didSet { defaults.set(keepShelfOpenAfterDrop, forKey: Keys.keepShelfOpenAfterDrop) }
+    }
+
     /// UX6: hide the shelf automatically when its items go from non-empty to
     /// empty (removal / drag-out). A shelf explicitly summoned while empty
     /// stays put — the rule only fires on the non-empty → empty transition.
@@ -531,6 +539,7 @@ final class SettingsStore {
         static let shelfEdgeOffset = prefix + "shelfEdgeOffset"
         static let edgeTabEnabled = prefix + "edgeTabEnabled"
         static let autoHide = prefix + "autoHide"
+        static let keepShelfOpenAfterDrop = prefix + "keepShelfOpenAfterDrop"
         static let autoHideWhenEmpty = prefix + "autoHideWhenEmpty"
         static let dragOutRemovalPolicy = prefix + "dragOutRemovalPolicy"
         static let language = prefix + "language"
@@ -612,6 +621,7 @@ final class SettingsStore {
             Keys.shelfEdgeOffset: 0.5,
             Keys.edgeTabEnabled: true,
             Keys.autoHide: false,
+            Keys.keepShelfOpenAfterDrop: true,
             Keys.autoHideWhenEmpty: true,
             Keys.dragOutRemovalPolicy: DragOutRemovalPolicy.keep.rawValue,
             Keys.language: LanguagePreference.system.rawValue,
@@ -745,6 +755,7 @@ final class SettingsStore {
         shelfEdgeOffset = defaults.double(forKey: Keys.shelfEdgeOffset)
         edgeTabEnabled = defaults.bool(forKey: Keys.edgeTabEnabled)
         autoHide = defaults.bool(forKey: Keys.autoHide)
+        keepShelfOpenAfterDrop = defaults.bool(forKey: Keys.keepShelfOpenAfterDrop)
         autoHideWhenEmpty = defaults.bool(forKey: Keys.autoHideWhenEmpty)
         dragOutRemovalPolicy = DragOutRemovalPolicy(
             rawValue: defaults.string(forKey: Keys.dragOutRemovalPolicy) ?? ""
