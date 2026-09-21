@@ -193,8 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }, onTrigger: { [weak self] in
         guard let self, !self.appState.isShelfVisible else { return }
         // UX2: 拖拽贴边唤出也记入自动唤出会话（拖空无落入自动收回）。
-        self.dragAutoShowSession.markShownAutomatically()
         self.shelfPresentationCoordinator.showClassic(animated: true)
+        self.dragAutoShowSession.markShownAutomatically()
     })
     /// UX1: 拖拽开始监听（按下 → 位移超阈值判定拖拽 → 抬起结束）。
     /// 同时承担 UX2 贴边唤出的会话记帐：只要任一拖拽驱动唤出路径可能
@@ -217,10 +217,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// UX1/2: 拖拽自动唤出会话裁决（纯逻辑状态机，见 Triggers/DragStartMonitor）。
     private var dragAutoShowSession = DragAutoShowSession()
     private var islandDragWasActivated = false
-    /// The drag destination can report a successful import just after the
-    /// global mouse-up monitor. This task lets that callback cancel a pending
-    /// automatic hide when the user chose to keep the shelf expanded.
-    private var pendingClassicAutoHideAfterDropTask: Task<Void, Never>?
 
     /// EdgeTab: 贴屏幕边缘的常驻拉环（单击展开 / 拖入接收 / 沿边拖动换位）。
     /// 拉环与 shelf 互斥（shelf 展开时拉环隐藏；shelf 的外缘隐形热区承担
@@ -288,9 +284,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 已有内容落入」，拖结束时不再自动收回。
         dropImportCoordinator.onImportHandled = { [weak self] in
             self?.dragAutoShowSession.noteImport()
-            self?.pendingClassicAutoHideAfterDropTask?.cancel()
-            self?.pendingClassicAutoHideAfterDropTask = nil
             self?.shelfWindowController.promoteClassicHoverPreviewIfNeeded()
+        }
+        shelfWindowController.onClassicDestinationEntered = { [weak self] sequenceNumber in
+            self?.dragAutoShowSession.destinationEntered(sequenceNumber: sequenceNumber)
+        }
+        shelfWindowController.onClassicDestinationEnded = { [weak self] sequenceNumber, accepted in
+            guard let self else { return }
+            if self.dragAutoShowSession.destinationEnded(sequenceNumber: sequenceNumber, accepted: accepted),
+               self.appState.isShelfVisible {
+                self.shelfPresentationCoordinator.hideClassic(animated: true)
+            }
+        }
+        shelfWindowController.onClassicPresentationRequested = { [weak self] in
+            self?.dragAutoShowSession.cancelAutomaticHide()
         }
         if !isUITesting {
             applyTriggerSettings()
@@ -407,8 +414,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard settingsStore.classicShelfEnabled else { return }
         guard settingsStore.dragAutoAppearMode == .immediate else { return }
         guard !appState.isShelfVisible else { return }
-        dragAutoShowSession.markShownAutomatically()
         shelfPresentationCoordinator.showClassic(animated: true)
+        dragAutoShowSession.markShownAutomatically()
     }
 
     private func handleDragUpdate(at point: CGPoint) {
@@ -421,9 +428,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// UX1: 拖拽结束。自动唤出的 shelf 默认动画收回；成功拖入时仅在
-    /// 「拖入后保持展开」开启后维持展开。手动唤出或拖拽中已手动隐藏的
-    /// shelf 不受影响。
+    /// UX1: 未投放时自动收回；成功拖入默认保持展开，可由设置关闭。
+    /// 本地接收区的回调可能晚于 mouse-up；状态机等待真实完成事件。
     ///
     /// 任务二审查结论（拖拽中可见性不变式）：本路径不会「拖拽中误隐」——
     /// DragStartMonitor 在派发 onDragEnd 前已把 isDragInProgress 复位，
@@ -433,8 +439,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 内按 isDragInProgress 门控。
     private func handleDragEnd() {
         let imported = dragAutoShowSession.receivedImport
-        let shouldAwaitLateImport = settingsStore.keepShelfOpenAfterDrop
-            && dragAutoShowSession.shouldAwaitLateImport
         let shouldHideClassic = dragAutoShowSession.dragEnded(
             keepShelfOpenAfterDrop: settingsStore.keepShelfOpenAfterDrop
         )
@@ -442,23 +446,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             shelfPresentationCoordinator.dragEnded(imported: imported)
             islandDragWasActivated = false
         }
-        if shouldAwaitLateImport {
-            pendingClassicAutoHideAfterDropTask?.cancel()
-            pendingClassicAutoHideAfterDropTask = Task { @MainActor [weak self] in
-                // NSDraggingDestination may handle an accepted drop just
-                // after the global mouse-up monitor. Briefly defer the
-                // no-drop hide so that callback can cancel it.
-                try? await Task.sleep(for: .milliseconds(100))
-                guard !Task.isCancelled,
-                      let self,
-                      self.appState.isShelfVisible else { return }
-                self.shelfPresentationCoordinator.hide(animated: true)
-                self.pendingClassicAutoHideAfterDropTask = nil
-            }
-            return
-        }
         guard shouldHideClassic, appState.isShelfVisible else { return }
-        shelfPresentationCoordinator.hide(animated: true)
+        shelfPresentationCoordinator.hideClassic(animated: true)
     }
 
     // MARK: - UX3 clipboard save

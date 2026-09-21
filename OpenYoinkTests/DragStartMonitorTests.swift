@@ -77,27 +77,133 @@ final class DragStartMonitorTests: XCTestCase {
         XCTAssertFalse(session.dragEnded())
     }
 
-    func testAutoShow_importDuringDrag_hidesByDefault() {
+    func testAutoShow_importDuringDrag_keepsShelfByDefault() {
         var session = DragAutoShowSession()
         session.dragBegan()
         session.markShownAutomatically()
         session.noteImport()
-        XCTAssertTrue(session.dragEnded())
+        XCTAssertFalse(session.dragEnded())
     }
 
-    func testAutoShow_withoutImport_canAwaitLateDropCallback() {
-        var session = DragAutoShowSession()
-        session.dragBegan()
-        session.markShownAutomatically()
-        XCTAssertTrue(session.shouldAwaitLateImport)
-    }
-
-    func testAutoShow_withImport_doesNotAwaitLateDropCallback() {
+    func testAutoShow_importDuringDrag_hidesWhenDisabled() {
         var session = DragAutoShowSession()
         session.dragBegan()
         session.markShownAutomatically()
         session.noteImport()
-        XCTAssertFalse(session.shouldAwaitLateImport)
+        XCTAssertTrue(session.dragEnded(keepShelfOpenAfterDrop: false))
+    }
+
+    func testAutoShow_mouseUpBeforeAcceptedDrop_keepsShelfWithoutTimeout() {
+        var session = destinationSession()
+        XCTAssertFalse(session.dragEnded())
+        XCTAssertFalse(session.isDragging)
+        XCTAssertTrue(session.shownAutomatically, "Retain ownership until the real destination callback")
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: true))
+        XCTAssertEqual(session, DragAutoShowSession())
+    }
+
+    func testAutoShow_mouseUpBeforeAcceptedDrop_hidesOnlyAfterImportWhenDisabled() {
+        var session = destinationSession()
+        XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: false))
+        XCTAssertTrue(session.destinationEnded(sequenceNumber: 10, accepted: true))
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: false))
+    }
+
+    func testAutoShow_destinationBeforeMouseUp_respectsBothSettings() {
+        for keep in [true, false] {
+            var session = destinationSession()
+            XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: true))
+            XCTAssertTrue(session.isDragging, "Never hide while the global drag is active")
+            XCTAssertEqual(session.dragEnded(keepShelfOpenAfterDrop: keep), !keep)
+            XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: keep))
+        }
+    }
+
+    func testAutoShow_rejectedCancelledOrDroppedElsewhere_hidesInEitherCallbackOrder() {
+        for keep in [true, false] {
+            var early = destinationSession()
+            XCTAssertFalse(early.destinationEnded(sequenceNumber: 10, accepted: false))
+            XCTAssertTrue(early.dragEnded(keepShelfOpenAfterDrop: keep))
+            var late = destinationSession()
+            XCTAssertFalse(late.dragEnded(keepShelfOpenAfterDrop: keep))
+            XCTAssertTrue(late.destinationEnded(sequenceNumber: 10, accepted: false))
+        }
+    }
+
+    func testAutoShow_duplicateDestinationEnd_doesNotOverwriteAcceptance() {
+        var session = destinationSession()
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: true))
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: false))
+        XCTAssertFalse(session.dragEnded())
+    }
+
+    func testAutoShow_oldCallbackCannotHideNewDrag() {
+        var session = destinationSession()
+        XCTAssertFalse(session.dragEnded())
+        session.dragBegan()
+        session.markShownAutomatically()
+        session.destinationEntered(sequenceNumber: 11)
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: false))
+        XCTAssertTrue(session.isDragging)
+        XCTAssertFalse(session.dragEnded())
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: true))
+        XCTAssertTrue(session.destinationEnded(sequenceNumber: 11, accepted: false))
+    }
+
+    func testAutoShow_explicitShowOrHideCancelsPendingAutomaticHide() {
+        for accepted in [true, false] {
+            var session = destinationSession()
+            XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: false))
+            session.cancelAutomaticHide()
+            XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: accepted))
+        }
+    }
+
+    func testAutoShow_manualPresentationDuringDragTakesOwnership() {
+        var session = destinationSession()
+        session.cancelAutomaticHide()
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: false))
+        XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: false))
+    }
+
+    func testAutoShow_unrelatedImportDoesNotTurnRejectedDestinationIntoSuccess() {
+        var session = destinationSession()
+        session.noteImport()
+        XCTAssertFalse(session.dragEnded())
+        XCTAssertTrue(session.destinationEnded(sequenceNumber: 10, accepted: false))
+    }
+
+    func testAutoShow_destinationOutsideTrackedDragDoesNotAcquireOwnership() {
+        var session = DragAutoShowSession()
+        session.destinationEntered(sequenceNumber: 10)
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: false))
+        XCTAssertEqual(session, DragAutoShowSession())
+    }
+
+    func testAutoShow_manuallyVisibleDestinationNeverHides() {
+        for accepted in [true, false] {
+            var session = DragAutoShowSession()
+            session.dragBegan()
+            session.destinationEntered(sequenceNumber: 10)
+            XCTAssertFalse(session.dragEnded(keepShelfOpenAfterDrop: false))
+            XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: accepted))
+        }
+    }
+
+    func testAutoShow_repeatedEntryKeepsAcceptedOutcome() {
+        var session = destinationSession()
+        session.destinationEntered(sequenceNumber: 10)
+        XCTAssertFalse(session.destinationEnded(sequenceNumber: 10, accepted: true))
+        session.destinationEntered(sequenceNumber: 10)
+        XCTAssertFalse(session.dragEnded())
+    }
+
+    private func destinationSession() -> DragAutoShowSession {
+        var session = DragAutoShowSession()
+        session.dragBegan()
+        session.markShownAutomatically()
+        session.destinationEntered(sequenceNumber: 10)
+        return session
     }
 
     func testAutoShow_importDuringDrag_keepsShelfWhenConfigured() {

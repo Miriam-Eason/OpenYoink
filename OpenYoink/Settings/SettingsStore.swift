@@ -337,7 +337,7 @@ final class SettingsStore {
     /// Keep an automatically revealed side shelf open after a successful
     /// drag-in. This deliberately affects only the drag-in completion path:
     /// drag-out and empty-shelf auto-hide retain their own settings.
-    /// Default: false, preserving the established automatic-hide behavior.
+    /// Default: true, preserving successful-drop behavior for existing users.
     var keepShelfOpenAfterDrop: Bool {
         didSet { defaults.set(keepShelfOpenAfterDrop, forKey: Keys.keepShelfOpenAfterDrop) }
     }
@@ -621,7 +621,7 @@ final class SettingsStore {
             Keys.shelfEdgeOffset: 0.5,
             Keys.edgeTabEnabled: true,
             Keys.autoHide: false,
-            Keys.keepShelfOpenAfterDrop: false,
+            Keys.keepShelfOpenAfterDrop: true,
             Keys.autoHideWhenEmpty: true,
             Keys.dragOutRemovalPolicy: DragOutRemovalPolicy.keep.rawValue,
             Keys.language: LanguagePreference.system.rawValue,

@@ -49,6 +49,9 @@ struct EmptyShelfAutoHideRule: Sendable, Equatable {
 @MainActor
 final class ShelfWindowController: NSObject {
     private static let animationDuration: TimeInterval = 0.2
+    var onClassicDestinationEntered: ((Int) -> Void)?
+    var onClassicDestinationEnded: ((Int, Bool) -> Void)?
+    var onClassicPresentationRequested: (() -> Void)?
 
     private let appState: AppState
     /// S8: shelf 位置/宽度/autoHide 等布局与行为设置的来源（原
@@ -228,6 +231,14 @@ final class ShelfWindowController: NSObject {
             dropTargetState: dropTargetState,
             gridGeometry: gridGeometry,
             dropOverride: dropOverride,
+            onDestinationEntered: { [weak self] sequenceNumber in
+                guard presentationStyle == .classic else { return }
+                self?.onClassicDestinationEntered?(sequenceNumber)
+            },
+            onDestinationEnded: { [weak self] sequenceNumber, accepted in
+                guard presentationStyle == .classic else { return }
+                self?.onClassicDestinationEnded?(sequenceNumber, accepted)
+            },
             contentViewController: hostingController
         )
         panel.contentView?.wantsLayer = true
@@ -577,6 +588,7 @@ final class ShelfWindowController: NSObject {
 
     /// 从贴附缘滑入并淡入（贴左缘时自左侧滑入，贴右缘时自右侧滑入）。
     func showShelf(animated: Bool = true, takeKeyboardFocus: Bool = false) {
+        onClassicPresentationRequested?()
         let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         if !isOpeningClassicHoverPreview {
             performClassicHoverActions(
@@ -663,6 +675,7 @@ final class ShelfWindowController: NSObject {
 
     /// 向贴附缘滑出并淡出，结束后 orderOut。
     func hideShelf(animated: Bool = true) {
+        onClassicPresentationRequested?()
         let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         performClassicHoverActions(classicHoverPreviewState.handle(.shelfHidden))
         stopClassicHoverPreviewMonitoring()
